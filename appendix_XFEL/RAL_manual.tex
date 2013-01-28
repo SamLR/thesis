@@ -1,0 +1,56 @@
+\title{LPD FEE CCC interface}
+\author{Sam Cook}
+\date{\today}
+
+\documentclass[12pt]{article}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Design and operation of the Eu-XFEL clock and control to ASIC interface.
+\end{abstract}
+
+\chapter{Introduction} % (fold)
+\label{cha:introduction}
+
+The main purpose of this interface is to translate the signals from the clock and control card (CCC) that are common to all the XFEL detectors to the specific command sequences required by the LPD ASIC. This means that there are two specifications to work to: those for the CCC and those for the ASIC. The details of these specifications can be found in \cite{CCC SPEC CITATION} and \cite{ASIC SPEC CITATION} respectively. A brief summary will be given here.
+
+The first specification to consider is that of the CCC. This consists of 4 signals sent via RJ45 using LVDS, the signals are shown in table~\ref{tab:ccc_spec}.
+
+\begin{table}
+	\begin{center}
+	\begin{tabular}{c|c}
+		Line & Notes \\
+		\hline
+		CLK    & 99.31~MHz system clock \\
+		CMD    & Fast command signals (START, STOP etc.) \\
+		VETO   & Veto/no-veto \\
+		STATUS & Return line from the ASIC to the CCC \\
+	\end{tabular}
+	\end{center}
+	\caption{Clock and control card signal specification}
+	\label{tab:ccc_spec}
+\end{table}
+
+% chapter introduction (end)
+\chapter{Specification} % (fold)
+\label{cha:specification}
+
+% chapter specification (end)
+\chapter{Receiver} % (fold)
+\label{cha:receiver}
+
+% chapter receiver (end)
+\chapter{Veto Filter} % (fold)
+\label{cha:veto_filter}
+
+% chapter veto_filter (end)
+\chapter{Transmitter} % (fold)
+\label{cha:transmitter}
+
+% chapter transmitter (end)
+\bibliographystyle{abbrv}
+\bibliography{main}
+
+\end{document}
