@@ -6,7 +6,7 @@
 *.mtc0
 *.pdf
 *.gz
-*.png
 .#
 _region_.tex
 .#*
+*.toc
