@@ -5,7 +5,7 @@
 %
 %  Copyright (c) 2013 RAL. All rights reserved.
 %
-\documentclass[]{article}
+\documentclass[]{report}
 
 % Use utf-8 encoding for foreign characters
 \usepackage[utf8]{inputenc}
@@ -47,6 +47,12 @@
 % Specify a new column type 'X' that is fixed width and centred
 % \newcolumntype{X}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt} } p{#1} }
 \newcolumntype{X}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% Set footnotes to be symbols as it stops random powers appearing
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+% Reset the footnote 'counter' every page
+\usepackage{perpage} %the perpage package
+\MakePerPage{footnote} %the perpage package command
 
 % Create tables of a defined total width with wrapped columns
 \usepackage{tabulary}
@@ -96,16 +102,17 @@
     \end{abstract}
     \tableofcontents
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Introduction} % (fold)
+    \chapter{Introduction} % (fold)
     \label{sec:introduction}
     %
     % TODO add notes on typography CAPS for states/Generics, signal names (should be monospace?), use of (X:Y) for
     %      (X down/to Y), use of (A:B) in generics/register lists to denote a collection of registers
-    %      signals  = mono
-    %      commands = mono caps
-    %      states   = caps
-    %      registers= italics
+    %      lines/ports = mono
+    %      commands    = mono caps
+    %      states      = caps
+    %      registers   = italics
     % TODO differentiation between START, STOP, RESET, N/VETO as commands from ccc and states (esp in Tx)
+    % TODO PORTS not signals when refering to interfaces?
     % TODO check consistant typography, use of quotes, names, use of 'word(s)' Vs 'command(s)' Vs 'cmd(s)' Vs 'instruction set'
     %      Instruction set  == the big list of words that _can_ be sent to the ASIC, from which command sequences are formed
     %      Command sequence == stream of commands sent to ASIC
@@ -171,7 +178,7 @@
     \end{table}
     % section introduction (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Basic Use} % (fold)
+    \chapter{Basic Use} % (fold)
     \label{sec:basic_use}
     % Main set up: registers
     %    Delay - leave as is
@@ -182,14 +189,14 @@
     %    Tx BRAM: set as instructed by ASIC manual
     Basic operation of the firmware in the presence of a CCC requires proper initialisation of the veto pattern BRAM, the transmitter control register and the transmitter command sequence BRAM. Operation without the CCC is discussed in section~\ref{sec:transmitter} under `reset mode'. It is assumed that pattern IDs are simple labels in the range 1 to 10, if a different bunch pattern ID scheme is being used the veto pattern ID registers will also have to be set (see section~\ref{sub:pattern_id_registers}). All the command sequences are based on the example operations from \cite{LPD MANUAL}.
     
-    \subsection{Veto pattern BRAM} % (fold)
+    \section{Veto pattern BRAM} % (fold)
     \label{sub:basic_veto_pattern_bram}
     The veto pattern BRAM can hold up to 10 veto patterns for trains of up to 3072 bunches. The pattern ID registers have default values of 1 to 10 with appropriate 96 word offsets (e.g.\ ID 1 has offset 0, ID 10 has offset 864). The veto patterns are read LSB to MSB with a `1' denoting a bunch that should be vetoed and a `0' denoting a bunch who's status is determined by the \texttt{veto} line (i.e. it can still be vetoed but by a dynamic decision, not the pattern). A pattern can contain as many vetoes and no-vetoes as desired but once the maximum of no-vetoes \footnote{the default is 512 no-vetos, set via generic.} have been received via the \texttt{veto} line all subsequent no-vetoes are ignored.
     
     % subsection basic_veto_pattern_bram (end)
-    \subsection{Transmitter control register} % (fold)
+    \section{Transmitter control register} % (fold)
     \label{sub:basic_transmitter_control_register}
-    The transmitter control register has 10 registers, of these only the \emph{-offset} and \emph{-nword} for each state (i.e. START, STOP and RESET) need to be set (the defaults for the others should be sufficient). The \emph{-offset} registers specify the start position within the command sequence BRAM at which the sequence begins whilst the \emph{-nwords} specify how many command words (including \texttt{NOPS}) need to be sent. The \emph{-offset} can be any value within the address range of the BRAM, i.e.\ [9:0], the upper bits are ignored; the \emph{-nwords}, similarly, has a maximum value of 1024 although this would mean that either other commands be subsets or would not be useable (this may be useful for reset-mode). Table~\ref{tab:basic_tx_control_reg} gives some example values based on the the LPD manual~\cite{LPD MANUAL}.
+    The transmitter control register has 10 registers, of these only the \emph{-offset} and \emph{-nword} for each state (i.e. START, STOP and RESET) need to be set (the defaults for the others should be sufficient). The \emph{-offset} registers specify the start position within the command sequence BRAM at which the sequence begins whilst the \emph{-nw} specify how many command words (including \texttt{NOPS}) need to be sent. The \emph{-offset} can be any value within the address range of the BRAM, i.e.\ [9:0], the upper bits are ignored; the \emph{-nw}, similarly, has a maximum value of 1024 although this would mean that either other commands be subsets or would not be useable (this may be useful for reset-mode). Table~\ref{tab:basic_tx_control_reg} gives some example values based on the the LPD manual~\cite{LPD MANUAL}.
     
     \begin{table}
         \begin{center}
@@ -197,19 +204,19 @@
             Register            & Value      & Notes                                       \\
             \hline
             \emph{START-offset} & 0x00000000 &                                             \\
-            \emph{START-nwords} & 0x00000005 & Assumes no trigger latency.                 \\
+            \emph{START-nw} & 0x00000005 & Assumes no trigger latency.                 \\
             \emph{STOP-offset}  & 0x00000005 & Place this straight after START.            \\
-            \emph{STOP-nwords}  & 0x0000020E & 14(Words) + 512(NOPS, to allow readout).    \\
+            \emph{STOP-nw}  & 0x0000020E & 14(Words) + 512(NOPS, to allow readout).    \\
             \emph{RESET-offset} & 0x00000011 & Assume the 512 NOPS are sent using encoding.\\
-            \emph{RESET-nwords} & 0x00000003 & Basic reset commands.                       \\
+            \emph{RESET-nw} & 0x00000003 & Basic reset commands.                       \\
         \end{tabular}
         \end{center}
-        \caption{Example START, STOP and RESET \emph{-offset} and \emph{-nwords} values. Based on \cite{LPD MANUAL}}
+        \caption{Example START, STOP and RESET \emph{-offset} and \emph{-nw} values. Based on \cite{LPD MANUAL}}
         \label{tab:basic_tx_control_reg}
     \end{table}
 
     % subsection basic_transmitter_control_register (end)
-    \subsection{Transmitter BRAM} % (fold)
+    \section{Transmitter BRAM} % (fold)
     \label{sub:basic_transmitter_bram}
     The transmitter BRAM holds the command sequences to be sent to the ASIC. These commands are listed in appendix~\ref{sec:asic_command_words} and a more thorough treatment is given in \cite{LPD MANUAL}. Table~\ref{tab:basic_tx_bram_vals} gives an example set of command sequences that are based on the example read/write cycles in the LPD manual\cite{LPD MANUAL}.
     \begin{table}
@@ -250,11 +257,11 @@
     % subsection basic_transmitter_bram (end)
     % section basic_use (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Top level} % (fold)
+    \chapter{Top level} % (fold)
     \label{sec:top_level}
     The top level of the CCC interface consists of 3 main blocks and 2 ancillary blocks: the receiver, the transmitter, the veto filter, a set of delay blocks and the delay register (see figure~\ref{fig:ccc_interface_block} for a schematic). The 3 main blocks\footnote{i.e. the receiver, the transmitter and the veto filter.} are discussed in their own sections along with their related generics and registers.  
     % TODO add 'generics' to each 'registers' sub section
-    \subsection{Interface} % (fold)
+    \section{Interface} % (fold)
     \label{sub:top_interface}
     The top level interface is given in table~\ref{tab:top_ccc_interface}, the top-level generics are given in table~\ref{tab:top_ccc_interface_generics}. Generics of the inner blocks (e.g.\ the receiver) are also accessible at the top level but are discussed in the appropriate section. The full interface, including LocalLink and RDMA lines, is given in appendix~\ref{FIXME}. % FIXME Add top interface to appendix
     \begin{table}
@@ -289,7 +296,7 @@
                 % RESET\_NW\_RESET           & std\_logic\_vector (31:0) & \dittostraight                        \\
                 % VETO\_WORD\_RESET          & std\_logic\_vector (31:0) & \dittostraight                        \\
                 % NVETO\_WORD\_RESET         & std\_logic\_vector (31:0) & \dittostraight                        \\
-                % RSYNC\_SIG                 & std\_logic\_vector (31:0) & \dittostraight                        \\
+                % \texttt{SYNC\_RESET}\_SIG                 & std\_logic\_vector (31:0) & \dittostraight                        \\
                 % READOUT\_SIG               & std\_logic\_vector (31:0) & \dittostraight                        \\
                 % DOWNSCALE\_SIG             & std\_logic\_vector (31:0) & \dittostraight                        \\
                 % DOWNSCALER\_STOP\_SIG      & std\_logic\_vector (31:0) & \dittostraight                        \\
@@ -334,11 +341,11 @@
         \label{tab:top_ccc_interface}
     \end{table}
     % subsection interface (end)
-    \subsection{Generics} % (fold)
+    \section{Generics} % (fold)
     \label{sub:top_generics}
     % TODO information on generics
     % subsection top_generics (end)
-    \subsection{Registers} % (fold)
+    \section{Registers} % (fold)
     \label{sub:top_registers}
     At the top level there is only one accessible register which is used for control of delays between the receiver and other blocks. The 32b register provides delays of up to \( 2^{32} - 1 \)~clks for the 3 command signals to the transmitter block (i.e. START, STOP and RESET) and the delaying of the START signal to form the `veto\_start'. The appropriate delay for `veto\_start' is given by:
     \begin{align}\label{equ:veto_start_delay}
@@ -363,9 +370,9 @@
         \label{tab:delay_regs}
     \end{table}
     % subsection registers (end)
-    \subsection{Implementation} % (fold)
+    \section{Implementation} % (fold)
     \label{sub:top_implementation}
-    The layout of blocks at the top level is shown in figure~\ref{fig:ccc_interface_block}. Information on the RDMA and LocalLink interfaces are given in sections~\ref{sec:rdma_interface} and \ref{sec:local_link_interface} respectively.
+    The layout of blocks at the top level is shown in figure~\ref{fig:ccc_interface_block}. Information on the RDMA and LocalLink interfaces are given in appendices~\ref{sec:rdma_interface} and \ref{sec:local_link_interface} respectively.
     
     \begin{figure}[htbp]
         \centering
@@ -377,9 +384,9 @@
     % subsection top_implementation (end)
     % section top_level (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Receiver} % (fold)
+    \chapter{Receiver} % (fold)
     \label{sec:receiver}
-    As stated in the introduction there are 5 signals that are sent by the CCC, these are transmitted on two lines: the fast command and the veto. In addition to these two command lines there are the clock and status lines. The clock carries the derived fast clock (normally 99~MHz) which is synchronised to the slow machine clock (normally 4.5~MHz) which is distributed by the timing receiver. The status line is currently proposed to return the clock from the ASIC to indicate presence. The full list of commands and payloads can be seen in table~\ref{tab:ccc_commands}.
+    As stated in the introduction there are 5 signals that are sent by the CCC, these are transmitted on two lines: the fast command and the veto. In addition to these two command lines there are the clock and status lines. The clock carries the derived fast clock (normally 99~MHz) which is synchronised to the slow machine clock (normally 4.5~MHz) which is distributed by the timing receiver. The status line is not currently functional but it is proposed that it should return a `heartbeat' e.g. the received clock. The full list of commands and payloads can be seen in table~\ref{tab:ccc_commands}.
   
     The receiver module is split into two state machines, one to handle each of the two command lines as seen in figure~\ref{fig:rx_block}. The blocks have similar designs although the command receiver block is slightly more complex to cope with the multiple signals. 
     \begin{figure}[htbp] 
@@ -392,9 +399,13 @@
     The designs uses strobes to signal which type of command has been received and buses to hold the ID information. The ID-buses (train, bunch pattern, checksum and bunch) are cleared at the start of the next command, this means that the data is available when ever it is needed.
   
     Both of blocks use a simple state machine design that can be summarised as: `IDLE \( \rightarrow \) LOG\_COMMAND \( \rightarrow \) STROBE\_COMMAND \( \rightarrow \) [LOG\_PAYLOAD \( \rightarrow \)] IDLE'. For both command and veto lines the state machine is triggered by the line going high. The stream is de-serialised by passing the serial commands to a shift register once a command is matched then the appropriate strobes is set. If the command has an attached payload then that is passed to a shift register until the appropriate number of payload bits have been received when they are written to a bus and the machine returns to `IDLE'.
-    \subsection{Interface} % (fold)
+    \section{Interface} % (fold)
     \label{sub:rx_interface}
-    The top level interface for the receiver block is shown in table~\ref{tab:rx_interface}. 
+    The top level interface for the receiver block is shown in table~\ref{tab:rx_interface}. Of the generics only the word definitions should be changed and only then for words of the same length (e.g.\ `110' changed for `101'), changing the payload lengths is likely to produce undefined behaviour.
+    
+    The inputs are essentially the same as the CCC specification with the addition of an internal `rst' line which will clear any buffers.
+    
+    The outputs give a single line for each command as well as buses that will display the different payloads until over written. It's important to note that the command lines go high for only a single clock whilst the payload buffers will retain their value until the next command starts, this means that, for example, the train\_id will remain available until the \texttt{STOP} command begins to be received.
     \begin{table}
         \begin{center}
             \begin{tabulary}{\textwidth}{l|c|c|L}
@@ -429,7 +440,7 @@
         \label{tab:rx_interface}
     \end{table}
     % subsection interface (end)
-    \subsection{Implementation} % (fold)
+    \section{Implementation} % (fold)
     \label{sub:rx_implementation}
 
     \begin{figure}[htbp]
@@ -446,13 +457,13 @@
         \label{fig:veto_rx_flow}
     \end{figure}
     
-    The receiver modules are implemented as state machines, each state machine uses a shift register to scan for commands. In the veto receiver (figure~\ref{fig:veto_rx_flow}) every command has the same format (<\texttt{COMMAND} 3:0><\texttt{BUNCH~ID} 11:0>) so only two states are implemented: CMD and BUNCH\_ID with the command (either VETO or NO-VETO) being flagged once its received and the bunch ID being recorded regardless. In the command receiver (figure~\ref{fig:cmd_rx_flow}) there are 5 states: IDLE, CMD, TRAIN, BUNCH\_PATTERN and CHECKSUM. The TRAIN, BUNCH\_PATTERN and CHECKSUM states are only used with the \texttt{START} command to separate its payload. For the \texttt{STOP} and \texttt{RESET} commands once the command has been received the flow returns to IDLE to await the next command.   
+    The receiver modules are implemented as state machines, each state machine uses a shift register to scan for commands. In the veto receiver (figure~\ref{fig:veto_rx_flow}) every command has the same format: <\texttt{COMMAND}~3:0><\texttt{BUNCH~ID}~11:0> so only two states are implemented: CMD and BUNCH\_ID with the command (either VETO or NO-VETO) being flagged once its received and the bunch ID being recorded regardless. In the command receiver (figure~\ref{fig:cmd_rx_flow}) there are 5 states: IDLE, CMD, TRAIN, BUNCH\_PATTERN and CHECKSUM. The TRAIN, BUNCH\_PATTERN and CHECKSUM are used to record the \texttt{START} command's payloads. If the \texttt{STOP} or \texttt{RESET} commands are received the flow returns to IDLE to await the next command. This means that, in theory, commands can be received immediately after one-another; however because of the design on the transmitter block this is unlikely to work as desired (see section~\ref{sec:transmitter} for further details).
     % subsection implementation (end)
     % section receiver (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Veto Filter} % (fold)
+    \chapter{Veto Filter} % (fold)
     \label{sec:veto_filter}
-    The XFEL veto specification states that there are two possible sources of veto: the \texttt{veto} line and the veto \textbf{pattern}. The \texttt{veto} line is a dynamic signal received from the CCC whilst the pattern is a fixed, pre-loaded set of patterns identified on a per-train basis. It is assumed that 10 patterns will be sufficient for day-to-day operation. The LPD, due to its fixed memory size, has a third source of vetoes: only 512 bunches can be recorded. 
+    The XFEL veto specification states that there are two possible sources of veto: the \texttt{veto} line and a predefined veto pattern. The \texttt{veto} line is a dynamic signal received from the CCC whilst the pattern is one of a number of pre-loaded patterns identified on a per-train basis. It is assumed that 10 patterns will be sufficient for day-to-day operation. The LPD, due to its fixed memory size, has a third source of vetoes: only 512 bunches can be recorded. A general truth table is given in table~\ref{tab:veto_truth_table}, as can be seen a \texttt{NO-VETO} is only sent if fewer than the maximum \texttt{NO-VETOS}s have been sent and both the pattern and the veto line agree specify that a \texttt{NO-VETO} should be sent.
     
     \begin{table}
         \begin{center}
@@ -473,9 +484,16 @@
         \caption{Truth table for veto decisions. Count is the number of `no-veto's already sent, it assumed to be 512 but can be any number less than this.}
         \label{tab:veto_truth_table}
     \end{table}
-    \subsection{Interface} % (fold)
+    \section{Interface} % (fold)
     \label{sub:veto_interface}
-  
+    The interface for the veto block is given in table~\ref{tab:veto_interface}. There are 10 generics to be set that specify the reset values for the pattern ID register (see section~\ref{sub:pattern_id_registers}) although these are unlikely to need changing.
+    
+    The in ports are mainly concerned with signals from the receiver module, these are used to determine when vetoes should be expected as they need to be synchronised with the bunch clock. There are two start signals that are of concern: the \texttt{veto\_start} and \texttt{start\_i}, the former of these indicates when the first veto should be expected (with an latency of FIXME) whilst the latter indicates that the \texttt{START} command, the train~ID and the bunch~pattern~ID have been received. The train and bunch~pattern~IDs are required before the first veto is received in order to correctly load the veto pattern as well as create the header for the veto logger. The bunch~ID is received but, currently, nothing is done with it. The \texttt{stop\_i} signal is used as an alternative to the maximum number of bunches to stop the veto filter.
+    
+    The out ports are very simple, one is the final veto decision which is sent to the transmitter whilst the other is a count of the number of \texttt{NO-VETO} commands sent to the ASIC. The number of no-vetoes is required for the data-receiver block to know how many words to expect once read-out starts.
+    
+    There are 3 data interfaces which are discussed in section~\ref{sub:tx_registers}. Briefly: the two RDMA interfaces allow external access to the pattern~BRAM and the pattern~ID~register whilst the LocalLink interface is used by the data-receiver to access the veto-decision-log which is required for data reconstruction.
+    
     \begin{table}
         \begin{center}
             \begin{tabulary}{\textwidth}{l|c|c|L}
@@ -510,23 +528,21 @@
                 ll                      &  & LocalLink & Interface to the veto log FIFO, uses a 256b data bus. \\
             \end{tabulary}
         \end{center}
-        \caption{Top level interface for the veto filter.}
-        \label{label}
+        \caption{Interface for the veto filter.}
+        \label{tab:veto_interface}
     \end{table}
     % subsection veto_interface (end)
-    \subsection{Registers} % (fold)
+    \section{Registers} % (fold)
     \label{sub:veto_registers}
     In the veto filter there are two blocks, the pattern ID registers and pattern BRAM, both accessed via a dedicated RDMA interface and the veto log which is accessed via local link (see appendices~\ref{sec:rdma_interface} and~\ref{sec:local_link_interface}). 
-    \subsubsection{Pattern BRAM} % (fold)
+    \subsection{Pattern BRAM} % (fold)
     \label{sub:pattern_bram}
     The pattern BRAM holds the pre-defined veto patterns. These are combined with the fast veto line to decide whether or not to veto a bunch (i.e. a bunch can be vetoed by either the pattern \emph{or} the veto line). Each pattern consists of a bit for each bunch in a train (it is assumed that there will be \( < \)3072 bunches in each train). If the bit is `1' then the bunch will be vetoed, otherwise it is dependant on the veto line.
     % TODO Add an assumptions section to introduction e.g. bunches/train, word length etc?  
   
-    It is assumed that no more than 10 patterns will be needed in normal operation so the BRAM is configured as 1024\( \times  \)32b words. This means that for a 3072 bunch train 96 words need to be defined for each pattern. The pattern is applied in a monotonically increasing manner, the veto bits are applied 0 to 31 and words are read from offset\( + 0 \) to offset\( + 96 \) (assuming 3072 bunches per train and hence 96 words). 
-  
-
+    It is assumed that no more than 10 patterns will be needed in normal operation so the BRAM is configured as 1024\( \times  \)32b words. This means that for a 3072 bunch train 96 words need to be defined for each pattern. The pattern is assumed to be spread across monotonically increasing addresses (e.g. address 0x0 to 0x60), the veto bits are applied 0 to 31. 
     % subsection pattern_bram (end)
-    \subsubsection{Pattern ID registers} % (fold)
+    \subsection{Pattern ID registers} % (fold)
     \label{sub:pattern_id_registers}
     The pattern ID registers map IDs to their appropriate offset within the BRAM. The specifications do not define the number of patterns needed during normal operation but it is assumed to be (\( < \)10); there are therefore 10 registers given to providing the required mapping one register per bunch pattern is used. The value of each register must be of the format:
     \begin{align} \label{fmt:pattern_id}
@@ -554,14 +570,18 @@
         \label{tab:default_pattern_id_reg}
     \end{table}
     % subsubsection pattern_id_registers (end)
-    \subsubsection{Veto log} % (fold)
+    \subsection{Veto log} % (fold)
     \label{sub:veto_locallink}
-    % TODO Write info on veto log local link
+    The veto log is a 13\( \times \)256b FIFO which logs the veto decision for each bunch. This information is formed into a LocalLink frame which uses 256b data words. The 256b header is defined as:
+    \begin{align}\label{fmt:ll_header}
+        <\text{Train ID } 255:224><\text{Bunch Pattern ID } 223:216>\ldots<\text{Number of no-vetos sent } 191:182> \ldots
+    \end{align}
+    where `\( \dots \)' represent padding (1's). The rest of the frame consists of the veto log which consists of a bit per bunch indicating either a veto (`1') or a no-veto (`0'). The blocks are ordered MSB first, e.g.\ bit 255 of frame 0 indicates the first veto decision whilst bit 0 of frame 12 indicates the last decision. 
     % subsection veto_locallink (end)
     % subsection veto_registers (end)
-    \subsection{Implementation} % (fold)
+    \section{Implementation} % (fold)
     \label{sub:veto_implementation}
-    The veto filter is split into two distinct processes: filtering and logging. Filtering to apply the dynamic veto system required in the specification and logging to reconstruct the image order. The logging is required because the ASIC has no information on which bunch is which (bunch ID is not recorded) and due to the ASIC's write pointer wrapping through memory images are not guaranteed in chronological order. The block level solution is shown in figure~\ref{fig:veto_filter_block}.
+    The veto filter is split into two distinct processes: filtering and logging. Filtering is a requirement of the specification. The logging is required because the ASIC records no identifying information about each bunch and due to the ASIC's write pointer wrapping through memory images are not guaranteed to be read out in chronological order. The block level solution is shown in figure~\ref{fig:veto_filter_block}.
     
     \begin{figure}[htbp]
         \centering
@@ -570,7 +590,7 @@
         \label{fig:veto_filter_block}
     \end{figure}
     
-    To apply the veto filter a large memory block is required to store a number of patterns that will be combined with the veto signal to form the final decision. These patterns are stored in a 1024\( \times \)32b BRAM with 96 words being used to fully express a 3072 bunch pattern. To construct the veto decision and control access into the BRAM a state machine is implemented (figure~\ref{fig:veto_filter_flow}). The final block, the pattern ID register, exists to specify the mapping of bunch pattern IDs to BRAM offsets.
+    The  1024\( \times \)32b BRAM is used to store the veto patterns to be combined with the veto signal in order to form the veto decisions. To construct the veto decision and control access into the BRAM a state machine is implementing figure~\ref{fig:veto_filter_flow} was used. The veto decisions are made at the beginning of each word to reduce latency whilst BRAM and state changes are made at the end. The final block, the pattern ID register, exists to specify the mapping from bunch pattern ID to BRAM offsets.
     
     \begin{figure}[htbp]
         \centering
@@ -579,7 +599,10 @@
         \label{fig:veto_filter_flow}
     \end{figure}
     
-    The logging is performed using a simple state machine to feed in words to a 32b in, 256b out FIFO, this state machine (figure~\ref{fig:veto_logger_flow}) also constructs the LocalLink frame header. The FIFO is a simple First Word Fall Through (FWFT) block with the optional \texttt{empty} and \texttt{almost\_empty} signals enabled. The read out of the FIFO is performed via a 256b-word localLink interface.
+    The logging is performed using a simple state machine to feed in words to a 32b in, 256b out FIFO, this state machine (figure~\ref{fig:veto_logger_flow}) also constructs the LocalLink frame header. The header requires 8 cycles between \texttt{start\_i} being asserted and \texttt{veto\_start}, to be properly formed. The FIFO is a simple First Word Fall Through (FWFT) block with the optional \texttt{empty} and \texttt{almost\_empty} signals enabled. The read out of the FIFO is performed via a 256b-word localLink interface. Once either \texttt{stop\_i} is asserted or \texttt{N\_BUNCHES} have been counted any remaining bits of the 256b word are filled with 1's and the LocalLink's \texttt{src\_rdy} is asserted. 
+    
+    The LocalLink interface is implemented by wrapping the FIFO's 256b \texttt{data\_out} port in some simple logic to make it conform to the local link standard. This mainly involves using \texttt{empty} to monitor the state of the FIFO, \texttt{almost\_empty} as \texttt{eof} and an internal flag from the logging state-machine for the \texttt{sof}.
+    
     
     \begin{figure}[htbp]
         \centering
@@ -591,11 +614,11 @@
     % subsection veto_implementation (end)
     % section veto_filter (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Transmitter} % (fold)
+    \chapter{Transmitter} % (fold)
     \label{sec:transmitter}
-    The transmitter block's main task is to act as the interpreter for the signals received from the CCC, translating them into command sequences that the ASIC can understand and act upon. As has been discussed above there are 4 signals that need to be translated for the ASIC: START, STOP, RESET and N/VETO. The 3 command signals all require an arbitrary number of words be sent to the ASIC whilst the veto signals are responded to by one of two words (`NOP' for vetos and `TRIGGER\_FLAG\_SET' for no-vetos).
+    The transmitter block's main task is to act as the interpreter for the signals received from the CCC, translating them into command sequences that the ASIC can understand and act upon. As has been discussed above there are 4 signals that need to be translated for the ASIC: START, STOP, RESET and N/VETO. The 3 command signals all require an arbitrary number of words be sent to the ASIC whilst the veto signals are responded to by one of two words\footnote{According to the LPD manual~\cite{LPD MANUAL} these are `NOP' for vetos and `TRIGGER\_FLAG\_SET' for no-vetos}.
     
-    There are currently two proposed modes that the transmitter can run in: `dynamic veto mode' and `reset mode'. Dynamic veto mode is intended to be the normal mode of operation for XFEL whilst reset mode is intended for static runs with simple veto patterns (e.g. for testing). A comparison of the two can be seen in table~\ref{tab:dynamic_vs_reset_mode}. Reset mode is enabled by strobing bit 0 of the main control register (see section~\ref{sub:ctrl_reg} for details). 
+    The transmitter can run in one of two mode: `dynamic veto mode' and `reset mode'. Dynamic veto mode is intended to be the normal mode of operation for XFEL whilst reset mode is intended for static runs with simple veto patterns (e.g. for testing). A comparison of the two can be seen in table~\ref{tab:dynamic_vs_reset_mode}. Reset mode is enabled by strobing bit 0 of the main control register (see section~\ref{sub:ctrl_reg} for details). The transmitter also has an optional minor mode called `down-scaler mode' this is primarily for versions of the ASIC that require a much slower clock during readout. When enabled it uses a multiplier (set by generic) to slow slow the clock, after a set number of cycles normal speed is resumed. 
     
     \begin{table}
         \begin{center}
@@ -617,54 +640,50 @@
         \label{tab:dynamic_vs_reset_mode}
     \end{table} 
     
-    \subsection{Interface} % (fold)
+    \section{Interface} % (fold)
     \label{sub:tx_interface}
+    The transmitter has 3 `sets' of generics: the control register reset values, the flag words (ending in \texttt{\_SIG}) and the down-scaler factor. The register resets set the default value to be written to the assorted registers if \texttt{rst} is asserted. The flag words specify certain command words that the transmitter should scan for in order to flag them for use elsewhere. The \texttt{\texttt{SYNC\_RESET}} flag is intended for use with any blocks (e.g.\ the slow command line) that have to be synchronised to the ASIC's bunch clock. The \texttt{READOUT} is intended for use by the data-receiver in order to prepare for read-out. The \texttt{DOWNSCALER\_SIG} is used to begin either the internal (if it's enabled) or an external down-scaler clock. The \texttt{DOWNSCALER\_STOP\_SIG} is only for use by an external source (the internal version counts cycles). The \texttt{DOWNSCALER\_FACTOR} specifies the factor to use for the internal down-scaler e.g.\ a factor of 100 means a scale of 100 fast clock cycles to each actual clock cycle.
+    
+    The in ports to the transmitter are all flags from the receiver; with the standard exception of \texttt{rst} which is the FEE internal signal (cf.\ \texttt{reset} which is the flag from the receiver).
+    
+    The out ports fall into 3 categories: signals to the ASIC (\texttt{ASIC\_in} and \texttt{clk\_in}), flags (marked \texttt{\_sent}) and \texttt{start\_nwords\_o}. The ASIC commands are defined in the specification. The flags have been discussed above with regards to their generic-defined trigger words. The final out port is a wrapper to the value of the \emph{start\_nwords} register (see section~\ref{sub:tx_registers}) which is used in setting the delay for \texttt{veto\_start}.
+    
+    The two RDMA interfaces are used for access to the command sequence BRAM and the control registers (sections~\ref{sub:tx_bram} and \ref{sub:tx_registers} respectively).
     
     \begin{table}
         \begin{center}
             \begin{tabulary}{\textwidth}{l | c | c | L}
                 Name & Direction & Type & Description \\
                 \hline
-                % WORD\_LENGTH          & & integer                   &  Default: 22;                                         \\
-                % N\_BUNCHES            & & integer                   &  Default: 3072;                                       \\
-                % TODO concatinate all of the reset values into e.g. 'control_reg_reset<0-9>' with specific naming info in tab?
-                REG\_RESET              & & std\_logic\_vector (31:0) &  Register resets (0-9), see section~\ref{sub:tx_registers}. \\
-                % CTRL\_REG\_RESET      & & std\_logic\_vector (31:0) &  Register resets, see section~\ref{sub:tx_registers}. \\
-                % START\_OFF\_RESET     & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % START\_NW\_RESET      & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % STOP\_OFF\_RESET      & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % STOP\_NW\_RESET       & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % RESET\_OFF\_RESET     & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % RESET\_NW\_RESET      & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % VETO\_WORD\_RESET     & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
-                % NVETO\_WORD\_RESET    & & std\_logic\_vector (31:0) &  \dittostraight                                       \\ 
+                REG\_RESET\_(9:0)       & & std\_logic\_vector (31:0) &  Register resets (0-9), see section~\ref{sub:tx_registers}. \\
                 % TODO Add a dedicated section for signal flags? 
-                RSYNC\_SIG            & & std\_logic\_vector (31:0) & Flag that the RSYNC command has been sent.                 \\
-                READOUT\_SIG          & & std\_logic\_vector (31:0) & Flag that the READOUT command has been sent.               \\
-                DOWNSCALE\_SIG        & & std\_logic\_vector (31:0) & Flag to start the downscaler (either internal or external).\\
-                DOWNSCALER\_STOP\_SIG & & std\_logic\_vector (31:0) & Flag to stop the downscaler.                               \\
+                \texttt{SYNC\_RESET}\_SIG            & & std\_logic\_vector (31:0) & Flag that the \texttt{SYNC\_RESET} command has been sent.                 \\
+                READOUT\_SIG          & & std\_logic\_vector (31:0) & Flag that the \texttt{READOUT} command has been sent.               \\
+                DOWNSCALE\_SIG        & & std\_logic\_vector (31:0) & Flag to start the down-scaler (either internal or external).\\
+                DOWNSCALER\_STOP\_SIG & & std\_logic\_vector (31:0) & Flag to stop the down-scaler.                               \\
                 DOWNSCALE\_FACTOR     & \multirow{-16}{*}[11.5pt]{Generic} % Avoids extra newline at top
-                & integer                   & Factor for the internal downscaler, default: 100.          \\
+                & integer                   & Factor for the internal down-scaler, default: 100.          \\
                 \hline
-                clk   & \multirow{6}{*}{In} 
-                & std\_logic & The CCC clock. \\
-                rst   &  & std\_logic & FEE reset. \\
-                start &  & std\_logic & \multirow{3}{*}{} \\
-                stop  &  & std\_logic &  \\
-                reset &  & std\_logic &  \\
-                veto  &  & std\_logic &  \\
+                clk   & \multirow{6}{*}{in} 
+                         & std\_logic & The CCC clock.          \\
+                rst   &  & std\_logic & FEE reset.              \\
+                start &  & std\_logic & From the receiver block.\\
+                stop  &  & std\_logic & \dittostraight          \\
+                reset &  & std\_logic & \dittostraight          \\
+                veto  &  & std\_logic & From the veto filter.   \\
                 \hline
-                ASIC\_in                & \multirow{7}{*}[-28.75pt]{Out}
+                ASIC\_in                & \multirow{7}{*}[-28.75pt]{out}
                 & std\_logic                & Fast serial commands to the ASIC.  \\
                 clk\_in                 &  & std\_logic                & Clock to the ASIC.  \\
                 readout\_sent           &  & std\_logic                & Readout flag (for ASIC receiver block).  \\
-                rsync\_sent             &  & std\_logic                & RSYNC flag (for slow control block).  \\
+                rsync\_sent             &  & std\_logic                & \texttt{SYNC\_RESET} flag (for slow control block).  \\
                 downscaler\_start\_sent &  & std\_logic                & Downscaler start flag.  \\
                 downscaler\_stop\_sent  &  & std\_logic                & Downscaler stop flag.  \\
                 start\_nwords\_o        &  & std\_logic\_vector (31:0) & Number of words used for `START' to set veto\_start delay.\\
                 \hline
-                bram\_rdma & \multirow{2}{*}[-17.25pt]{Interface} & RDMA & Interface to the ASIC command word BRAM. Mask: 0x000003FF. \\
-                ctrl\_rdma &                            & RDMA & Interface to the control register. Mask: 0x0000000F. \\
+                bram\_rdma & \multirow{2}{*}[-17.25pt]{Interface} 
+                             & RDMA & Interface to the ASIC command word BRAM. Mask: 0x000003FF. \\
+                ctrl\_rdma & & RDMA & Interface to the control register. Mask: 0x0000000F. \\
             \end{tabulary}
         \end{center}
         \caption{Interface for the transmitter block}
@@ -672,34 +691,36 @@
     \end{table}
   
     % subsection tx_interface (end)
-    \subsection{Registers} % (fold)
+    \section{Registers} % (fold)
     \label{sub:tx_registers}
     There are two externally accesible sets of registers in the transmitter block, a control register and the command BRAM both are accessed via RDMA (see appendix~\ref{sec:rdma_interface}). The control registers direct the flow of the state machine whilst the BRAM stores the instruction sets to be sent to the ASIC. There are 3 commands that the block has instruction sets for: START, STOP and RESET. Obviously these are normally received via the receiver module but the RESET command can also be sent using a toggle in the control register.
-    \subsubsection{Control register} % (fold)
+    \subsection{Control register} % (fold)
     \label{sub:ctrl_reg}
-    The control register specifies 10 registers
+    The control register specifies 10 registers:
     \begin{description}
-        \item[1] A general `control' register that toggles various modes (i.e. whether to use the downscaler module and manual RESET) as well as how many bits to send downscaled if that mode is enabled.
-        \item[2-7] 3 pairs of registers that store the number of words (shortened to `nwords') and offsets for the 3 different instruction sets (i.e. one `nword' and one `offset' for each of START, STOP and RESET).
+        \item[1] The general state-machine control register that toggles various modes (i.e. whether to use the down-scaler module and manual RESET) as well as how many bits to send downscaled if that mode is enabled.
+        \item[2-7] 3 pairs of registers that store the number of words (shortened to `nw') and offsets for the 3 different instruction sets (i.e. one \emph{-nw} and one \emph{-offset} for each of START, STOP and RESET).
         \item[8] The word to be sent in case of a veto.
         \item[9] The word to be sent in case of a no-veto.
         \item[10] The status register, indicates what state the statemachine is in.
     \end{description}
-    The control register has a specific format given below:
+    default values and addresses are given in table~\ref{tab:ctrl_reg_default}.
+    
+    The state-machine control register takes values of the following format:
     \begin{align} \label{fmt:control_reg}
-        <\text{DOWNSCALER\_ENABLE} 32>\ldots<\text{DOWNSCALER\_BITS} 20:5>\ldots<\text{RESET\_MODE\_EN} 0>
+        <\text{DOWNSCALER\_ENABLE } 32>\ldots<\text{DOWNSCALER\_BITS } 20:5>\ldots<\text{RESET\_MODE\_EN } 0>
     \end{align}
     `RESET\_MODE\_EN' is a flag to manually start the state-machine in reset mode i.e. reset\_nwords worth of commands from reset\_offset in the BRAM will be sent. This mode can be used instead of dynamically determining the veto to be sent in a `fire and forget' manner.
 
-    `DOWNSCALER\_ENABLE' indicates that the internal downscaler should be used to send the next `DOWNSCALER\_BITS', obviously this means that the maximum number of bits that can be sent at the downscaled rate is \(2^16 - 1\), i.e. 65,536 or 2,978\(\times\)22b words. Obviously if downscaling is being handled by an external clock this restriction doesn't apply.
+    `DOWNSCALER\_ENABLE' indicates that the internal down-scaler should be used to send the next `DOWNSCALER\_BITS', this means that the maximum number of bits that can be sent at the down-scaled rate is \(2^{16} - 1\), i.e. 65,536 or 2,978\(\times\)22b words. Obviously if down-scaling is being handled by an external clock this restriction doesn't apply.
 
-    The BRAM has 1024\( \times \)32b words, so offsets are specified with bits 9 downto 0 and nwords have a maximum value of 1024. 
-
-    The veto/nveto\_word registers specifiy the appropriate words to send why vetos are being dynamically determined (i.e. not in RESET\_MODE). When run in this way the state-machine progresses START\(\rightarrow\)vetos\(\rightarrow\)STOP with vetos being determined by the veto filter.
+    The BRAM offsets and command sequence lengths (\emph{-offset} and \emph{-nw} registers respectively) have maximum values determined by the size of the BRAM i.e.\ 1,024. These values are set using the LSB of the word i.e.\ 9 down-to 0. Obviously setting an \emph{-offset} to 1,024 will result in only 1 word and unless the corresponding \emph{-nw} is set to 1 this will result in an address overflow and undefined behaviour. By the same token setting an \emph{-nw} register to 1,024 is allowed but will mean that any other commands to be sent must be either specified as subsets of this command sequence or not used.\footnote{This could be useful if using the reset-mode or in dynamic mode if \texttt{RESET} is not expected to be used.}
+    
+    The veto/nveto\_word registers specify the appropriate words to send when in dynamic-veto mode, the defaults are \texttt{NOP} and \texttt{TRIGGER\_FLAG\_SET} respectively. When run in this way the state-machine progresses START\(\rightarrow\)vetoes\(\rightarrow\)STOP with vetoes being determined by the veto filter.
       
-    The status register is a read only register that logs which state the state-machine is in.
+    The status register is a read only register that logs which state the state-machine is in and has the following format:
     \begin{align} \label{fmt:status_reg}
-        <\text{state\_machine\_enabled} 31>\ldots<\text{RESET} 3> <\text{STOP} 2> <\text{DYNAMIC\_VETO} 1> <\text{START} 0>
+        <\text{state\_machine\_enabled } 31>\ldots<\text{RESET } 3> <\text{STOP } 2> <\text{DYNAMIC\_VETO } 1> <\text{START } 0>
     \end{align}
 	  
     \begin{table}
@@ -724,62 +745,65 @@
     \end{table}
 
     % subsubsection control_regsiter (end)
-    \subsubsection{Instruction set BRAM} % (fold)
+    \subsection{Instruction set BRAM} % (fold)
     \label{sub:tx_bram}
-    The BRAM used to store the instruction sets is 1024\(\times\)32b words. The ASIC expects commands of the format:
+    The BRAM used to store the instruction sets is 1024\(\times\)32b words. The ASIC expects 20b commands of the format:
     \begin{align}\label{fmt:asic_format}
-        <\text{SYNC}>X<\text{CMD} 17:10><\text{PADDING\_ZEROS} 9:0>
+        <\text{SYNC }19><\text{X }18<\text{CMD } 17:10><\text{PADDING\_ZEROS } 9:0>
     \end{align}
-    if a word length greater than 20b is being used (e.g. 22b, the current default) then the zero-padding is extended. The `SYNC' bit is assumed to be a `1' and is automatically prepended by the state machine. The only exception to this is the 20b command `RSYNC' (currently set to be 0x5A5A5) which overrides the above format.
+    if a word length greater than 20b is being used (e.g. 22b, the current default) then the zero-padding is extended as required. The `SYNC' bit is a `1' and `X', by convention, a `0' these are automatically prepended by the state machine. The only exception to this is the 20b command \texttt{SYNC\_RESET} (currently set to be 0x5A5A5) which overrides the above format.
 
-    Words not defined by the ASIC are ignored so internal flag triggers (e.g. for `DOWNSCALER\_START') need not be legal.
+    Words not defined by the ASIC are ignored so internal flag triggers (e.g. for `DOWNSCALER\_START') need not be defined ASIC commands.
 
     The BRAM expects words to have the format:
     \begin{align}\label{fmt:tx_bram}
-        <\text{N\_NOPS} 31:\text{WORD\_LENGTH}><\text{COMMAND} (\text{WORD\_LENGTH} - 1):0>
+        <\text{N\_NOPS } 31:\text{WORD\_LENGTH }><\text{COMMAND } (\text{WORD\_LENGTH} - 1):0>
     \end{align}
-    The COMMAND is expected to be correctly padded e.g. if 22b words are being used for a normal command the last 12b should be `0'. The SYNC bit doesn't need to be set and any value will be ignored. N\_NOPS is expected to indicate how many `no-operation' commands should follow the COMMAND a NOP is assumed to be a SYNC-bit followed by the appropriate number of 0's. It is important to note that NOPs contribute to the number of words sent for any state and a NOP sent as a member of N\_NOPS must not be the final command
+    The COMMAND is expected to be correctly padded e.g. if 22b words are being used for a normal command the last 12b should be `0'. The SYNC bit doesn't need to be set. N\_NOPS indicates how many \texttt{NOP} commands should follow the COMMAND, a NOP is pre-defined to be a SYNC-bit followed by the appropriate number of 0's. It is important to note that NOPs contribute to the number of words sent for any state and a NOP sent as a member of N\_NOPS must not be the final command
 
-    \textbf{Example:} if, for `START' and 22b words, 5 commands are to be sent to the ASIC: `POWER\_UP' (0x02,see table~\ref{tab:asic_command_words}) followed by 4 NOPS, the first entry to the BRAM would be 0x00C08000 followed by 0x00000000. The 0x00C specifies 3 NOPS (\(0xC>>2 = 0x3\)) and 0x08000 is is 0x02 with the appropriate padding. The final entry of 0x00000000 is processes as a NOP and it's SYNC bit is automatically set.
+    \textbf{Example:} if, for the \texttt{START}-sequence and using 22b words, \texttt{POWER\_UP} (0x02\footnote{see table~\ref{tab:asic_command_words}}) followed by 4 NOPS is to be sent then the first two locations in BRAM could be set to `0x00C08000' and `0x00000000'. 0x00C specifies 3 NOPS (\(\text{0xC}<<2 = 0x3\)\footnote{Where `\(<<\)' is a left-shift, the \( <<2 \) is account for the 2~MSB of the command.}) and 0x08000 is the command (\(\text(0x02) << 22 \)) with the appropriate padding. The final entry of 0x00000000 is the 4\(^{\text{th}}\) NOP; its SYNC bit will be automatically set.
     % subsubsection tx_bram (end)
     % subsection tx_registers (end)
-    \subsection{Implementation} % (fold)
+    \section{Implementation} % (fold)
     \label{sub:tx_implementation}
     
-    The transmitter block has two key responsibilities:
+    The transmitter block has 3 key responsibilities:
     \begin{itemize*}
-        \item To transmit preset start/stop/reset command sequences. 
-        \item To transmit either the `veto' or `no-veto' word for each bunch, at run-time, as determined by the veto filter.
+        \item To transmit preset \texttt{START}/\texttt{STOP}/\texttt{RESET} command sequences. 
+        \item To transmit either the \texttt{VETO} or \texttt{NO-VETO} word for each bunch, at run-time, as determined by the veto filter.
         \item Maintain a constant latency with respect to the bunch clock. 
     \end{itemize*}
     There are also several ancillary requirements:
     \begin{itemize}
-        \item Provide information to other blocks on the command stream being sent to the ASIC (e.g. if the command `RSYNC' is sent).
+        \item Provide information to other blocks on the command stream being sent to the ASIC (e.g. if the command \texttt{SYNC\_RESET} is sent).
         \item Provide a mechanism to slow the clock sent to the ASIC for read-out (only required for ASIC~v1).
         \item Allow reconfiguration of the command sequences.
         \item Ensure proper setting of synchronisation bits.
     \end{itemize}
     
-    % The core of the functionality was implemented using a state-machine running two processes: the state-machine itself and a block to deal with command inspection and 
-
-    % The core of the functionality was split over two processes: one responsible for word inspection and serialisation, another that implemented the flow of the state machine. Whilst these processes are very strongly coupled in terms of sharing state information their functionality is very decoupled,  
+    To meet the above requirements two processes were implemented: the shift-block to serialise and inspect command sequences; and the state-machine that determines when to change state and which command sequences to use. Previously, these responsibilities were split across multiple blocks but to simplify state sharing and meet the latency requirements they were merged into a single block. Figure~\ref{fig:tx_block} shows a block diagram of the transmitter, both the shift-block and state-machine are within the state-machine block.
     
-    The state-machine is responsible for two main processes: the state-machine itself and the serialisation of the command sequences. In earlier designs these functions were split over two blocks but with the requirement of command inspection, and setting of the synchronisation bit they were merged into one block but kept as separate processes. The separation of the two processes (`shift\_block' and `state\_machine') means that they can share state information (bit and word counts) whilst maintaining separate functionality. 
-    
-    The shift\_block primarily acts as a shift register to serialise the command words being sent to the ASIC. It has two secondary functions that require inspection of the commands being serialised: flagging and setting sync-bits. Some of the other components of the firmware require certain command words be flagged for their own functionality (e.g. the slow command needs to know when `RSYNC' is sent). To do this when a word is loaded from the BRAM (and only the BRAM) it is compared to the 4 pre-set words given in table~\ref{tab:shift_block_flags}, if it matches one then the appropriate flag is set. Flags are tested sequentially, in the order given in the table, so if a word matches two flags only the first will be set. The flag words are set via generics and are not expected to change, flags do not have to be valid ASIC words although the ASIC's response to unknown commands is undefined. At the same time as checking for flags the first two bits of each word are set appropriately: for RSYNC they are set to `01' and all other words `10' as specified in \cite{LPD DESIGN MANUAL THING}. These sync-bits are not included in tests for flags so can be omitted. The shift\_block's functionality for the different states are given in table~\ref{tab:shift_block_behaviour}, the different states are described below and show schematically in figure~\ref{fig:tx_sm_flow}.
+        \begin{figure}[htbp]
+            \centering
+                \includegraphics[width=\textwidth]{images/pdfs/tx_block.pdf}
+            \caption{Block diagram of the transmitter.}
+            \label{fig:tx_block}
+        \end{figure}
+        
+    The shift-block primarily acts as a shift register to serialise the command words being sent to the ASIC. It has two secondary functions that require inspection of the commands being serialised: flagging and setting sync-bits. Some of the other components of the firmware require certain command words be flagged for their own functionality (e.g. the slow command needs to know when \texttt{SYNC\_RESET} is sent). To do this when a word is loaded from the BRAM (and only from the BRAM) it is compared to the 4 pre-set words given in table~\ref{tab:shift_block_flags}, if it matches one then the appropriate flag is set. These words are tested sequentially, in the order given in the table, so if a word matches multiple triggers only the flag corresponding to the first match will be set. The flag words are set via generics and are not expected to change, flags do not have to be valid ASIC words although the ASIC's response to unknown commands is undefined and should be confirmed prior to use. At the same time as checking for flags the first two bits of each word are set appropriately: for \texttt{SYNC\_RESET} they are set to `01' and all other words `10' as specified in \cite{LPD DESIGN MANUAL THING}. These sync-bits are not included in tests for flags. The shift-block's functionality for the different states are given in table~\ref{tab:shift_block_behaviour}, the different states are described below.
 
     \begin{table}
         \begin{center}
         \begin{tabular}{c|c|l}
             Flag             & Default    & Notes \\
             \hline
-            rsync            & 0x00069694 & Used to keep the slow command line synced to the ASIC.   \\
-            readout          & 0x00044400 & Used to alert the readout receiver block of input.       \\
-            downscaler start & 0x00044000 & Moving to the slower clock (either internal or external).\\
-            downscaler stop  & 0x00055000 & Stop using the slow clock (external only).               \\
+            rsync             & 0x00069694 & Used to keep the slow command line synced to the ASIC.   \\
+            readout           & 0x00044400 & Used to alert the readout receiver block of input.       \\
+            down-scaler start & 0x00044000 & Moving to the slower clock (either internal or external).\\
+            down-scaler stop  & 0x00055000 & Stop using the slow clock (external only).               \\
         \end{tabular}
         \end{center}
-        \caption{Flag information, these are command words that the shift\_block looks for and will flag along. Default values are for 22b words, see section~\ref{sub:tx_bram} for more details. When looking for flags the sync bits (the first two bits) are ignored so do not need to be set.}
+        \caption{Flag information, these are command words that the shift-block looks for and will flag along. Default values are for 22b words, see section~\ref{sub:tx_bram} for more details. When looking for flags the sync bits (the first two bits) are ignored so do not need to be set.}
         \label{tab:shift_block_flags}
     \end{table}
     
@@ -800,7 +824,7 @@
                     \scriptsize
                     \item[1] i.e. 0x200000 is the full 22b command, including sync-bit.
                 \end{tablenotes}
-                \caption{Description of the shift\_block's behaviour depending on state.}
+                \caption{Description of the shift-block's behaviour depending on state.}
             \end{threeparttable}
         \end{center}
         \label{tab:shift_block_behaviour}
@@ -821,39 +845,12 @@
         \caption{General control logic flow for START, STOP and RESET states.}
         \label{fig:tx_sm_bram_control_flow}
     \end{figure}
-    % %%%%%
-    % To implement the required functionality the problem was divided into 4 sub-blocks: the state-machine, a set of control registers, a BRAM and the downscaler. Obviously the state-machine implemented the logic, the control registers determine access to the BRAM where the instruction sets for each signal are stored whilst the downscaler provides the required ability to change the frequency of the transmitted clock by a factor which is set via generics (this requirement is only applicable to the version 1 of the ASIC and will likely be deprecated in the final version).
-    % 
-    % As can be seen in figure~\ref{fig:tx_sm_flow} the transmitter state machine has 5 main states: IDLE, START, STOP, VETO and RESET. The 4 non-idle states fall into 2 modes: the dynamic veto mode (the START\( \rightarrow \)VETO\( \rightarrow \)STOP cycle) and the reset mode which is a static set of commands, whether this is used as a response to the RESET CCC signal or is manually triggered is at the discretion of the user. 
-    % 
-    % The prime difference between the cycles is the addition of the VETO state to the dynamic veto mode. During VETO the state-machine responds dynamically to the `veto' signal received from the filter. For the other states the machine will statically read out the appropriate contents of the BRAM starting at the offset and continuing until the correct number of words have been sent.
-    
-    
-    % \begin{list}
-    %     \item Provide a mechanism to 
-    %     \item Allow arbitrary sequences of commands to be sent to the ASIC.
-    %     \item Operate in both dynamic-veto and reset modes.
-    % \end{list}
-    % 
-    % \begin{list}
-    %     \item Correctly serialise the command words from BRAM.
-    %     \item Send the correct number of words for each signal.
-    %     \item Read from the correct region of the BRAM.
-    % \end{list}
-    
     % subsection tx_implementation (end)
     % section transmitter (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \appendix
-    \section{ASIC command words} % (fold)
+    \chapter{ASIC command words} % (fold)
     \label{sec:asic_command_words}
-    
-    \begin{figure}[htbp]
-        \centering
-            \includegraphics[width=\textwidth]{images/pdfs/tx_block.pdf}
-        \caption{caption}
-        \label{fig:images_pdfs_tx_block}
-    \end{figure}
     
     \begin{table}
         \begin{center}
@@ -894,7 +891,7 @@
     \end{table}
     % section asic_command_words (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{RDMA interface} % (fold)
+    \chapter{RDMA interface} % (fold)
     \label{sec:rdma_interface}
     The RDMA interfaces~\cite{RDMA INTERFACE} used throughout the project have the interface seen in table~\ref{tab:rdma_interface}. The appropriate mask for the address is given in appropriate interface notes. In general for BRAMs a size of 32\(\times\)1024 the appropriate bits are 9:0 whilst for registers the bits 3:0 are used. 
     
@@ -920,7 +917,7 @@
     \end{table}
     % section rdma_interface (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \section{Local Link interface} % (fold)
+    \chapter{Local Link interface} % (fold)
     \label{sec:local_link_interface}
     The Local Link~\cite{LOCAL LINK CITATION} interface is used only to read out the veto log. The details of the frame composition are given in section~\ref{sec:veto_filter}. The interface used is minimal (i.e. no optional features are used) and given in table~
     \begin{table}
