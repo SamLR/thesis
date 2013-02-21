@@ -98,7 +98,7 @@
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \begin{abstract}
-        Design and operation of the Clock and Control Card (CCC)/Large Pixel Detector (LPD) ASIC interface for the Eu-XFEL. 
+        Design and operation of the firmware for the Clock and Control Card (CCC) to Large Pixel Detector (LPD) ASIC interface for the Eu-XFEL. 
     \end{abstract}
     \tableofcontents
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -601,8 +601,7 @@
     
     The logging is performed using a simple state machine to feed in words to a 32b in, 256b out FIFO, this state machine (figure~\ref{fig:veto_logger_flow}) also constructs the LocalLink frame header. The header requires 8 cycles between \texttt{start\_i} being asserted and \texttt{veto\_start}, to be properly formed. The FIFO is a simple First Word Fall Through (FWFT) block with the optional \texttt{empty} and \texttt{almost\_empty} signals enabled. The read out of the FIFO is performed via a 256b-word localLink interface. Once either \texttt{stop\_i} is asserted or \texttt{N\_BUNCHES} have been counted any remaining bits of the 256b word are filled with 1's and the LocalLink's \texttt{src\_rdy} is asserted. 
     
-    The LocalLink interface is implemented by wrapping the FIFO's 256b \texttt{data\_out} port in some simple logic to make it conform to the local link standard. This mainly involves using \texttt{empty} to monitor the state of the FIFO, \texttt{almost\_empty} as \texttt{eof} and an internal flag from the logging state-machine for the \texttt{sof}.
-    
+    The LocalLink interface is implemented by wrapping the FIFO's 256b \texttt{data\_out} port in some simple logic to make it conform to the local link standard. This mainly involves using \texttt{empty} to monitor the state of the FIFO, \texttt{almost\_empty} as \texttt{eof} and an internal flag from the logging state-machine for the \texttt{sof}. The \texttt{sop} (start-of-payload) signal is not used to differentiate the header from the payload as the entire frame will ultimately form part of the meta-data in the header of the read-out.
     
     \begin{figure}[htbp]
         \centering
@@ -848,6 +847,25 @@
     % subsection tx_implementation (end)
     % section transmitter (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \chapter{Timing Diagrams} % (fold)
+    \label{cha:timing_diagrams}
+    The main points of importance for timing in the interface are the relative delays between CCC signals (if using `dynamic mode') or between setting the \texttt{RESET\_MODE\_EN} bit (if in `reset mode').
+    \begin{figure}[htbp]
+        \centering
+            \includegraphics[width=\textwidth]{images/isim/edited/start_sequence.png}
+        \caption{Timing diagram of a typical start sequence.}
+        \label{fig:images_isim_edited_start_sequence}
+    \end{figure}
+    
+     \begin{figure}[htbp]
+         \centering
+             % FIXME possibly rotate 90?
+             \includegraphics[width=\textwidth]{images/isim/edited/reset_mode.png}
+         \caption{Timing diagram showing the latency between setting the \texttt{RESET\_MODE\_EN} bit and the beginning of the command sequence.}
+         \label{fig:reset_mode_timing}
+     \end{figure}
+     
+    % chapter timing_diagrams (end)
     \appendix
     \chapter{ASIC command words} % (fold)
     \label{sec:asic_command_words}
