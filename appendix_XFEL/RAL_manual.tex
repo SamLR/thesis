@@ -127,7 +127,7 @@
     
     In order to control the ASIC via the CCC interface firmware was written to act as a translator unit. Translation was split into three separate sub-blocks: CCC-signal receiver, a veto filter and the ASIC command transmitter. Between the three blocks the messages from the CCC are interpreted, processed and encoded for the ASIC. 
     
-    Table~\ref{tab:ccc_spec} gives the specification of the CCC interface whilst table~\ref{tab:asic_spec} is the ASIC interface. The CCC specification specifies 5 command words for the cmd and veto lines that the interface needs to interpret: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (full specification of these are given in table~\ref{tab:ccc_commands}). Each of these command words correspond to either a single word or a sequence that must be sent to the ASIC. \texttt{START}, \texttt{STOP} and \texttt{RESET} all have multi-word sequences associated to them whilst \texttt{VETO} and \texttt{NOVETO} are communicated with single words. The command sequences for the ASIC are specified in the LPD manual~\cite{LPD MANUAL}, the command words are given in appendix~\ref{cha:asic_command_words}.
+    Table~\ref{tab:ccc_spec} gives the specification of the CCC interface whilst table~\ref{tab:asic_spec} is the ASIC interface. The CCC specification specifies 5 command words for the cmd and veto lines that the interface needs to interpret: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (full specification of these are given in table~\ref{tab:ccc_commands}). Each of these command words correspond to either a single word or a sequence that must be sent to the ASIC. \texttt{START}, \texttt{STOP} and \texttt{RESET} all have multi-word sequences associated to them whilst \texttt{VETO} and \texttt{NOVETO} are communicated with single words. The command sequences for the ASIC are specified in the LPD manual~\cite{lpd_manual}, the command words are given in appendix~\ref{cha:asic_command_words}.
     
     \begin{table}
         \begin{center}
@@ -173,7 +173,7 @@
                 & NOVETO & 101 &                                & Record this bunch \\
             \end{tabulary}
         \end{center}
-        \caption{Command definitions for the fast and veto lines from the CCC, see \cite{CCC SPECIFICATION} for more details.}
+        \caption{Command definitions for the fast and veto lines from the CCC, see \cite{xfel_veto_spec} for more details.}
         \label{tab:ccc_commands}
     \end{table}
     % section introduction (end)
@@ -187,7 +187,7 @@
     %    Tx control reg: Set START/STOP/RESET nwords+offsets 
     %                                (Veto = NOP, NOVETO=TRIGGER_FLAG_SET 0x10, should be set already)
     %    Tx BRAM: set as instructed by ASIC manual
-    Basic operation of the firmware in the presence of a CCC requires proper initialisation of the veto pattern BRAM, the transmitter control register and the transmitter command sequence BRAM. Operation without the CCC is discussed in section~\ref{cha:transmitter} under `reset mode'. It is assumed that pattern IDs are simple labels in the range 1 to 10, if a different bunch pattern ID scheme is being used the veto pattern ID registers will also have to be set (see section~\ref{sub:pattern_id_registers}). All the command sequences are based on the example operations from \cite{LPD MANUAL}.
+    Basic operation of the firmware in the presence of a CCC requires proper initialisation of the veto pattern BRAM, the transmitter control register and the transmitter command sequence BRAM. Operation without the CCC is discussed in section~\ref{cha:transmitter} under `reset mode'. It is assumed that pattern IDs are simple labels in the range 1 to 10, if a different bunch pattern ID scheme is being used the veto pattern ID registers will also have to be set (see section~\ref{sub:pattern_id_registers}). All the command sequences are based on the example operations from \cite{lpd_manual}.
     
     \section{Veto pattern BRAM} % (fold)
     \label{sub:basic_veto_pattern_bram}
@@ -196,7 +196,7 @@
     % subsection basic_veto_pattern_bram (end)
     \section{Transmitter control register} % (fold)
     \label{sub:basic_transmitter_control_register}
-    The transmitter control register has 10 registers, of these only the \emph{-offset} and \emph{-nword} for each state (i.e. START, STOP and RESET) need to be set (the defaults for the others should be sufficient). The \emph{-offset} registers specify the start position within the command sequence BRAM at which the sequence begins whilst the \emph{-nw} specify how many command words (including \texttt{NOPS}) need to be sent. The \emph{-offset} can be any value within the address range of the BRAM, i.e.\ [9:0], the upper bits are ignored; the \emph{-nw}, similarly, has a maximum value of 1024 although this would mean that either other commands be subsets or would not be useable (this may be useful for reset-mode). Table~\ref{tab:basic_tx_control_reg} gives some example values based on the the LPD manual~\cite{LPD MANUAL}.
+    The transmitter control register has 10 registers, of these only the \emph{-offset} and \emph{-nword} for each state (i.e. START, STOP and RESET) need to be set (the defaults for the others should be sufficient). The \emph{-offset} registers specify the start position within the command sequence BRAM at which the sequence begins whilst the \emph{-nw} specify how many command words (including \texttt{NOPS}) need to be sent. The \emph{-offset} can be any value within the address range of the BRAM, i.e.\ [9:0], the upper bits are ignored; the \emph{-nw}, similarly, has a maximum value of 1024 although this would mean that either other commands be subsets or would not be useable (this may be useful for reset-mode). Table~\ref{tab:basic_tx_control_reg} gives some example values based on the the LPD manual~\cite{lpd_manual}.
     
     \begin{table}
         \begin{center}
@@ -211,14 +211,14 @@
             \emph{RESET-nw} & 0x00000003 & Basic reset commands.                       \\
         \end{tabular}
         \end{center}
-        \caption{Example START, STOP and RESET \emph{-offset} and \emph{-nw} values. Based on \cite{LPD MANUAL}}
+        \caption{Example START, STOP and RESET \emph{-offset} and \emph{-nw} values. Based on \cite{lpd_manual}}
         \label{tab:basic_tx_control_reg}
     \end{table}
 
     % subsection basic_transmitter_control_register (end)
     \section{Transmitter BRAM} % (fold)
     \label{sub:basic_transmitter_bram}
-    The transmitter BRAM holds the command sequences to be sent to the ASIC. These commands are listed in appendix~\ref{cha:asic_command_words} and a more thorough treatment is given in \cite{LPD MANUAL}. Table~\ref{tab:basic_tx_bram_vals} gives an example set of command sequences that are based on the example read/write cycles in the LPD manual\cite{LPD MANUAL}.
+    The transmitter BRAM holds the command sequences to be sent to the ASIC. These commands are listed in appendix~\ref{cha:asic_command_words} and a more thorough treatment is given in \cite{lpd_manual}. Table~\ref{tab:basic_tx_bram_vals} gives an example set of command sequences that are based on the example read/write cycles in the LPD manual\cite{lpd_manual}.
     \begin{table}
         \begin{center}
         \begin{tabular}{c|c|c|l}
@@ -251,7 +251,7 @@
               & CLOCK\_DIV\_SEL          & 0x00015000 & \\
         \end{tabular}
         \end{center}
-        \caption{Example command sequences to be loaded into the BRAM, see~\cite{LPD MANUAL} for further details. Note the BRAM word includes any required NOPS and assumes 22b words, see section~\ref{sub:tx_registers} for further details.}
+        \caption{Example command sequences to be loaded into the BRAM, see~\cite{lpd_manual} for further details. Note the BRAM word includes any required NOPS and assumes 22b words, see section~\ref{sub:tx_registers} for further details.}
         \label{tab:basic_tx_bram_vals}
     \end{table}
     % subsection basic_transmitter_bram (end)
@@ -263,7 +263,7 @@
     % TODO add 'generics' to each 'registers' sub section
     \section{Interface} % (fold)
     \label{sub:top_interface}
-    The top level interface is given in table~\ref{tab:top_ccc_interface}, the top-level generics are given in table~\ref{tab:top_ccc_interface_generics}. Generics of the inner blocks (e.g.\ the receiver) are also accessible at the top level but are discussed in the appropriate section. The full interface, including LocalLink and RDMA lines, is given in appendix~\ref{FIXME}. % FIXME Add top interface to appendix
+    The top level interface is given in table~\ref{tab:top_ccc_interface}, the top-level generics are given in table~\ref{tab:top_ccc_interface_generics}. Generics of the inner blocks (e.g.\ the receiver) are also accessible at the top level but are discussed in the appropriate section. 
     \begin{table}
         \begin{center}
             \begin{tabulary}{\textwidth}{l | c | L}
@@ -615,7 +615,7 @@
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \chapter{Transmitter} % (fold)
     \label{cha:transmitter}
-    The transmitter block's main task is to act as the interpreter for the signals received from the CCC, translating them into command sequences that the ASIC can understand and act upon. As has been discussed above there are 4 signals that need to be translated for the ASIC: START, STOP, RESET and N/VETO. The 3 command signals all require an arbitrary number of words be sent to the ASIC whilst the veto signals are responded to by one of two words\footnote{According to the LPD manual~\cite{LPD MANUAL} these are `NOP' for vetos and `TRIGGER\_FLAG\_SET' for no-vetos}.
+    The transmitter block's main task is to act as the interpreter for the signals received from the CCC, translating them into command sequences that the ASIC can understand and act upon. As has been discussed above there are 4 signals that need to be translated for the ASIC: START, STOP, RESET and N/VETO. The 3 command signals all require an arbitrary number of words be sent to the ASIC whilst the veto signals are responded to by one of two words\footnote{According to the LPD manual~\cite{lpd_manual} these are `NOP' for vetos and `TRIGGER\_FLAG\_SET' for no-vetos}.
     
     The transmitter can run in one of two mode: `dynamic veto mode' and `reset mode'. Dynamic veto mode is intended to be the normal mode of operation for XFEL whilst reset mode is intended for static runs with simple veto patterns (e.g. for testing). A comparison of the two can be seen in table~\ref{tab:dynamic_vs_reset_mode}. Reset mode is enabled by strobing bit 0 of the main control register (see section~\ref{sub:ctrl_reg} for details). The transmitter also has an optional minor mode called `down-scaler mode' this is primarily for versions of the ASIC that require a much slower clock during readout. When enabled it uses a multiplier (set by generic) to slow slow the clock, after a set number of cycles normal speed is resumed. 
     
@@ -789,7 +789,7 @@
             \label{fig:tx_block}
         \end{figure}
         
-    The shift-block primarily acts as a shift register to serialise the command words being sent to the ASIC. It has two secondary functions that require inspection of the commands being serialised: flagging and setting sync-bits. Some of the other components of the firmware require certain command words be flagged for their own functionality (e.g. the slow command needs to know when \texttt{SYNC\_RESET} is sent). To do this when a word is loaded from the BRAM (and only from the BRAM) it is compared to the 4 pre-set words given in table~\ref{tab:shift_block_flags}, if it matches one then the appropriate flag is set. These words are tested sequentially, in the order given in the table, so if a word matches multiple triggers only the flag corresponding to the first match will be set. The flag words are set via generics and are not expected to change, flags do not have to be valid ASIC words although the ASIC's response to unknown commands is undefined and should be confirmed prior to use. At the same time as checking for flags the first two bits of each word are set appropriately: for \texttt{SYNC\_RESET} they are set to `01' and all other words `10' as specified in \cite{LPD DESIGN MANUAL THING}. These sync-bits are not included in tests for flags. The shift-block's functionality for the different states are given in table~\ref{tab:shift_block_behaviour}, the different states are described below.
+    The shift-block primarily acts as a shift register to serialise the command words being sent to the ASIC. It has two secondary functions that require inspection of the commands being serialised: flagging and setting sync-bits. Some of the other components of the firmware require certain command words be flagged for their own functionality (e.g. the slow command needs to know when \texttt{SYNC\_RESET} is sent). To do this when a word is loaded from the BRAM (and only from the BRAM) it is compared to the 4 pre-set words given in table~\ref{tab:shift_block_flags}, if it matches one then the appropriate flag is set. These words are tested sequentially, in the order given in the table, so if a word matches multiple triggers only the flag corresponding to the first match will be set. The flag words are set via generics and are not expected to change, flags do not have to be valid ASIC words although the ASIC's response to unknown commands is undefined and should be confirmed prior to use. At the same time as checking for flags the first two bits of each word are set appropriately: for \texttt{SYNC\_RESET} they are set to `01' and all other words `10' as specified in \cite{lpd_manual}. These sync-bits are not included in tests for flags. The shift-block's functionality for the different states are given in table~\ref{tab:shift_block_behaviour}, the different states are described below.
 
     \begin{table}
         \begin{center}
@@ -963,14 +963,14 @@
                 0x5A5A5 & SYNC\_RESET \\
             \end{tabular}
         \end{center}
-        \caption{ASIC command words, see \cite{REF FOR LPD ASIC} for a full description and recommended use of these commands.}
+        \caption{ASIC command words, see \cite{lpd_manual} for a full description and recommended use of these commands.}
         \label{tab:asic_command_words}
     \end{table}
     % section asic_command_words (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \chapter{RDMA interface} % (fold)
     \label{cha:rdma_interface}
-    The RDMA interfaces~\cite{RDMA INTERFACE} used throughout the project have the interface seen in table~\ref{tab:rdma_interface}. The appropriate mask for the address is given in appropriate interface notes. In general for BRAMs a size of 32\(\times\)1024 the appropriate bits are 9:0 whilst for registers the bits 3:0 are used. 
+    The RDMA interfaces used throughout the project have the interface seen in table~\ref{tab:rdma_interface}. The appropriate mask for the address is given in appropriate interface notes. In general for BRAMs a size of 32\(\times\)1024 the appropriate bits are 9:0 whilst for registers the bits 3:0 are used. 
     
     \begin{table}
         \begin{center}
@@ -996,7 +996,7 @@
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \chapter{Local Link interface} % (fold)
     \label{cha:local_link_interface}
-    The Local Link~\cite{LOCAL LINK CITATION} interface is used only to read out the veto log. The details of the frame composition are given in section~\ref{cha:veto_filter}. The interface used is minimal (i.e. no optional features are used) and given in table~
+    The Local Link~\cite{locallink_spec} interface is used only to read out the veto log. The details of the frame composition are given in section~\ref{cha:veto_filter}. The interface used is minimal (i.e. no optional features are used) and given in table~\ref{tab:local_link_interface}.
     \begin{table}
         \begin{center}
             \begin{tabulary}{\textwidth}{l | c | c | L}
@@ -1021,6 +1021,6 @@
     % section local_link_interface (end)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \bibliographystyle{plain}
-    \bibliography{}
+    \bibliography{ral_manual}
 \end{document}
     
