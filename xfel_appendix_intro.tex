@@ -1,0 +1,60 @@
+    \part{LPD-CCC Interface} % (fold)
+    \label{prt:lpd_ccc_interface}
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \chapter{Introduction} % (fold)
+    \label{cha:lpd_ccc_introduction}
+    The Large Pixel Detector (LPD) is being built for the European X-ray Free-Electron Laser (Eu-XFEL). To maintain synchronisation between the machine and the detectors a common Clock and Control Card (CCC) is being developed. To communicate with the LPD-ASIC a Front End Electronics card (FEE) has been developed that will act as a fan out for commands and provide detector specific control.
+    
+    In order to control the ASIC via the CCC interface firmware was written to act as a translator unit. Translation was split into three separate sub-blocks: CCC-signal receiver, a veto filter and the ASIC command transmitter. Between the three blocks the messages from the CCC are interpreted, processed and encoded for the ASIC. 
+    
+    Table~\ref{tab:ccc_spec} gives the specification of the CCC interface whilst table~\ref{tab:asic_spec} is the ASIC interface. The CCC specification specifies 5 command words for the cmd and veto lines that the interface needs to interpret: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (full specification of these are given in table~\ref{tab:ccc_commands}). Each of these command words correspond to either a single word or a sequence that must be sent to the ASIC. \texttt{START}, \texttt{STOP} and \texttt{RESET} all have multi-word sequences associated to them whilst \texttt{VETO} and \texttt{NOVETO} are communicated with single words. The command sequences for the ASIC are specified in the LPD manual~\cite{lpd_manual}, the command words are given in appendix~\ref{cha:asic_command_words}.
+    
+    \begin{table}
+        \begin{center}
+            \begin{tabular}{c|l}
+                Line & Notes \\
+                \hline
+                clk    & System clock (likely 99.31~MHz).        \\
+                cmd    & Fast command signals (\texttt{START}, \texttt{STOP} etc.) \\
+                veto   & Veto/no-veto.                                             \\
+                status & Return line from the ASIC to the CCC.                     \\
+            \end{tabular}
+        \end{center}
+        \caption{Clock and control card signal specification}
+        \label{tab:ccc_spec}
+    \end{table}
+
+    \begin{table}
+        \begin{center}
+            \begin{tabular}{c|l}
+                Line       & Notes                                       \\
+                \hline
+                CLK        & The system clock, as received from the CCC. \\
+                SERIAL\_IN & Serial command line.                        \\
+            \end{tabular}
+        \end{center}
+        \caption{ASIC signal specification}
+        \label{tab:asic_spec}
+    \end{table}
+  
+    \begin{table}
+        \begin{center}
+            \begin{tabulary}{\textwidth}{c | c | c | C | l}
+                Line & Command & Value & Payload & Description \\
+                \hline
+                \multirow{5}{*}[11.5pt]{Control} 
+                & START & 1100 & Train ID (32b), bunch pattern ID (8b), checksum (8b) & Start of the train \\
+                & STOP  & 1010 & none                                                 & End of the train \\
+                & RESET & 1001 & none                                                 & Reset the FEE and ASIC \\
+                \hline
+        
+                \multirow{2}{*}{Veto} 
+                & VETO   & 110 & \multirow{2}{*}{Bunch ID (8b)} & Veto this bunch \\
+                & NOVETO & 101 &                                & Record this bunch \\
+            \end{tabulary}
+        \end{center}
+        \caption{Command definitions for the fast and veto lines from the CCC, see \cite{xfel_veto_spec} for more details.}
+        \label{tab:ccc_commands}
+    \end{table}
+    % section introduction (end)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
