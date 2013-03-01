@@ -1,0 +1,105 @@
+    \part{LPD-CCC Interface} % (fold)
+    \label{prt:lpd_ccc_interface}
+    
+    \chapter{Introduction} % (fold)
+    \label{cha:lpd_ccc_introduction}
+    \section{XFEL: an overview} % (fold)
+    \label{sec:xfel_an_overview}
+    The European~XFEL (X-ray Free-Electron Laser) is a 3.4~km X-ray source under-construction below Hamburg in Germany. The project is scheduled to begin operation in 2016 with construction finishing in 2015. To produce the x-rays electrons are accelerated to 17.5~GeV then passed through an `undulator' where the electrons emit synchrotron radiation (i.e.\ x-rays). The x-rays have a wavelength of between 0.05~nm and 4.7~nm (i.e.\ photon energies from 25~keV to 0.26~keV respectively). 
+    
+    % The x-rays are produced as short (100~fs) brilliant\footnote{Peak brilliance is \( 5\times10^{33} \) photons s\(^{-1}\) mm\(^{-2}\) mrad\(^{-2}\) 0.1\(^{-1}\)\% bandwidth, the average brilliance is \( 1.6\times10^{25} \) photons s\(^{-1}\) mm\(^{-2}\) mrad\(^{-2}\) 0.1\(^{-1}\)\% bandwidth.} pulses (or bunches) with 27,000 pulses per second. Each bunch is part of a train with 10 trains every second. Each train lasts \( \sim \)600~\(\text{\mu}\)s each bunch is separated from the next within the train by 220~ns. 
+    
+    % Bunches are grouped into trains \( \sim \)600~ns long containing . Trains arrive at a rate of 10~Hz (i.e.\ one every 100~ms). The x-rays will have a wavelength of between 0.05~nm and 4.7~nm (i.e.\ photon energies from 25~keV to 0.26~keV respectively). 
+    
+    There are currently 3 detectors being designed for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three detectors share a common set of requirements (from~\cite{XFEL WEBSITE}):
+    \begin{description}
+        \item[Swiftness] XFEL produces 27,000 X-ray pulses per second, ideally all of these need to be recorded.
+        \item[Dynamic range and single photon] The predicted 
+        % In any one flash the number of photons received by any portion of the detector can vary massively, in order to preserve as much information as possible the detector needs to be able to cope with anything from a single photon to thousands.
+        \item[Radiation resistance] When fully operational XFEL is intended to be used nearly continuously, obviously any detector used has to be able to survive the harsh environment at the end of the beam-line.
+    \end{description}
+    % section xfel_an_overview (end)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \section{Firmware, VHDL and FPGAs} % (fold)
+    \label{sec:firmware_vhdl_and_fpgas}
+    
+    % section firmware_vhdl_and_fpgas (end)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \section{The Clock and Control Card (CCC)} % (fold)
+    \label{sec:the_clock_and_control_card_ccc}
+    With bunches every 220~ns timing has to be carefully controlled across the many systems that make up XFEL. To do this a common clock is used for all sub-systems. In order to maintain a simple interface the detectors all use the common `Clock and Control Card' (CCC) this ensures that only information relevant to the detectors is passed to them (e.g. when a train is about to start). 
+    
+    Information is supplied over 4 lines: command (CMD), veto, clock and a status line that provides basic information back to the CCC (see table~\ref{tab:ccc_spec}). Of the 4 lines the \texttt{cmd} and \texttt{veto} are most important to us (the \texttt{clk} only contains the clock and the \texttt{status} line is currently intended to return a heartbeat\footnote{i.e.\ the \texttt{clk} in order to confirm operation.}). Between the \texttt{cmd} and \texttt{veto} lines there are 5 commands that concern us: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (see table~\ref{tab:ccc_commands}).
+    \begin{table}
+        \begin{center}
+            \begin{tabular}{c|l}
+                Line & Notes \\
+                \hline
+                clk    & Fast clock derived from the system clock (likely 99.31~MHz).\\
+                cmd    & Fast command signals (\texttt{START}, \texttt{STOP} etc.)   \\
+                veto   & Veto/no-veto.                                               \\
+                status & Return line from the ASIC to the CCC.                       \\
+            \end{tabular}
+        \end{center}
+        \caption{Clock and control card signal specification}
+        \label{tab:ccc_spec}
+    \end{table}
+    
+    \begin{table}
+        \begin{center}
+            \begin{tabulary}{\textwidth}{c | c | c | C | l}
+                Line & Command & Value & Payload & Description \\
+                \hline
+                \multirow{5}{*}[11.5pt]{Control} 
+                & START & 1100 & Train ID (32b), bunch pattern ID (8b), checksum (8b) & Start of the train \\
+                & STOP  & 1010 & none                                                 & End of the train \\
+                & RESET & 1001 & none                                                 & Reset the FEE and ASIC \\
+                \hline
+            
+                \multirow{2}{*}{Veto} 
+                & VETO   & 110 & \multirow{2}{*}{Bunch ID (8b)} & Veto this bunch \\
+                & NOVETO & 101 &                                & Record this bunch \\
+            \end{tabulary}
+        \end{center}
+        \caption{Command definitions for the fast and veto lines from the CCC, see \cite{xfel_veto_spec} for more details.}
+        \label{tab:ccc_commands}
+    \end{table}
+    
+    % section the_clock_and_control_card_ccc (end)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \section{The Large Pixel Detector (LPD)} % (fold)
+    \label{sec:the_large_pixel_detector_lpd}
+    The Large Pixel Detector (LPD) is a 2D, 1~Mega-pixel detector designed at the Rutherford Appleton Laboratory in the UK. The detector is designed to be modular with 1~Megapixel being made up of 16 `supermodules', each of these modules contains 128 Application Specific Integrated Circuits (ASICs) that each control and readout 512 pixels.
+    
+    The ASIC was used as the requirements of XFEL exceed what can be bought `off-the-shelf'. Each ASIC 
+    % section the_large_pixel_detector_lpd (end)
+    % section introduction (end)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    
+    
+    
+    % The Large Pixel Detector (LPD) is being built for the European X-ray Free-Electron Laser (Eu-XFEL). To maintain synchronisation between the machine and the detectors a common Clock and Control Card (CCC) is being developed. To communicate with the LPD-ASIC a Front End Electronics card (FEE) has been developed that will act as a fan out for commands and provide detector specific control.
+%     
+%     In order to control the ASIC via the CCC interface firmware was written to act as a translator unit. Translation was split into three separate sub-blocks: CCC-signal receiver, a veto filter and the ASIC command transmitter. Between the three blocks the messages from the CCC are interpreted, processed and encoded for the ASIC. 
+%     
+%     Table~\ref{tab:ccc_spec} gives the specification of the CCC interface whilst table~\ref{tab:asic_spec} is the ASIC interface. The CCC specification specifies 5 command words for the cmd and veto lines that the interface needs to interpret: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (full specification of these are given in table~\ref{tab:ccc_commands}). Each of these command words correspond to either a single word or a sequence that must be sent to the ASIC. \texttt{START}, \texttt{STOP} and \texttt{RESET} all have multi-word sequences associated to them whilst \texttt{VETO} and \texttt{NOVETO} are communicated with single words. The command sequences for the ASIC are specified in the LPD manual~\cite{lpd_manual}, the command words are given in appendix~\ref{cha:asic_command_words}.
+%     
+% 
+%     \begin{table}
+%         \begin{center}
+%             \begin{tabular}{c|l}
+%                 Line       & Notes                                       \\
+%                 \hline
+%                 CLK        & The system clock, as received from the CCC. \\
+%                 SERIAL\_IN & Serial command line.                        \\
+%             \end{tabular}
+%         \end{center}
+%         \caption{ASIC signal specification}
+%         \label{tab:asic_spec}
+%     \end{table}
+%   
+
+%     % section introduction (end)
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
