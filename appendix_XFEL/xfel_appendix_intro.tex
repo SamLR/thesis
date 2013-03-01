@@ -4,15 +4,32 @@
 \label{cha:lpd_ccc_introduction}
 \section{XFEL: an overview} % (fold)
 \label{sec:xfel_an_overview}
-The European~XFEL (X-ray Free-Electron Laser) is a 3.4~km X-ray source under-construction below Hamburg in Germany. The project is scheduled to begin operation in 2016 with construction finishing in 2015. To produce the x-rays electrons are accelerated to 17.5~GeV then passed through an `undulator' where the electrons emit synchrotron radiation (i.e.\ x-rays). The x-rays have a wavelength of between 0.05~nm and 4.7~nm (i.e.\ photon energies from 25~keV to 0.26~keV respectively). 
+The European~XFEL (X-ray Free-Electron Laser) is a 3.4~km X-ray source under-construction below Hamburg in Germany. The project is scheduled to begin operation in 2016 with construction finishing in 2015. To produce the x-rays electrons are accelerated to 17.5~GeV then passed through an `undulator' where the electrons emit synchrotron radiation (i.e.\ x-rays). The x-rays have a wavelength of between 0.05~nm and 4.7~nm\footnote{This corresponds to photon energies from 25~keV to 0.26~keV respectively.}. 
     
-There are currently 3 detectors being designed for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three detectors share a common set of requirements (from~\cite{xfel_website}):
+There are currently 3 detectors being designed for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three detectors share a common set of requirements~\cite{xfel_website}:
 \begin{description}
     \item[Swiftness] XFEL produces 27,000 X-ray pulses per second, ideally all of these need to be recorded.
     \item[Dynamic range] In any one flash the number of photons received by any portion of the detector can vary massively (between 1 and \(10^5\)~\cite{lpd_manual}) this information needs to be preserved by the detector.
     \item[Radiation resistance] When fully operational XFEL is intended to be used nearly continuously, obviously any detector used has to be able to survive the harsh environment at the end of the beam-line.
 \end{description}
+Each detector is controlled during operation through the Clock and Control Card (CCC) that provides an interface to the common timing system and basic control. The detectors have to provide their own translation layer that is responsible for creating the interface between the CCC and their own hardware. 
+
+For the Large Pixel Detector the interface is hosted on a dedicated card called the Front End Module (FEM), each FEM controls a single `supermodule', the final LPD will comprise 16 supermodules. Slow control of the FEM (i.e.\ for configuration) is executed via a custom control channel which is separate to the generic CCC.
 % section xfel_an_overview (end)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Firmware} % (fold)
+\label{sec:firmware}
+Firmware refers to programs that are run from persistent memory (rather than being loaded into volatile memory), more generally it tends to operate at the interface between hardware and software. Firmware sacrifices some of the flexibility (in terms of portability and complexity) in order to gain speed by running directly on the hardware. 
+
+There are a variety of languages for writing firmware the one used for LPD is VHSIC Hardware description language (VHDL). VHDL works by describing the expected operation of various discrete blocks within the firmware, these descriptions are then translated (synthesised) into bit-code that the chip can run. Testing is done using simulation of the system as well as on-chip testing.
+
+For the LPD firmware is run on Field Programmable Gate Arrays (FPGA) which combine logic `slices' and on board memory to create flexible and powerful chips. This means that software can be used to control configuration settings for the firmware which then can run with very low latencies and in a highly predictable manner.
+
+% Firmware was run on Field Programmable Gate Arrays (FPGA) which 
+% Firmware is the name given for programs that are executed from persistent memory rather than volatile memory, more generally it is what lies between hardware and software. One of the most common forms of programmable hardware are `Field Programmable Gate Arrays' (FPGAs) these are literally chips who's logic can be re-written at any time. 
+% TODO FIX ALL OF THIS IT SUCKS
+% An FPGA is made from many discrete `slices' each slice comprises a look up table and some amount of logic that means that the FPGA as a whole can be programmed to run a large variety of different programs. This gives an FPGA much greater flexibility over what it can perform compared to custom designed chips (ASICs) as they can have their logic re-written as required, it does also mean that they can generally not be used in such 
+% section firmware (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The Clock and Control Card (CCC)} % (fold)
 \label{sec:the_clock_and_control_card_ccc}
