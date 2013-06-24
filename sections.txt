@@ -1,0 +1,89 @@
+Introduction: motivation
+    CoMET/requirement for high intensity muon beams
+    cLFV
+    µSR
+    nuclear matrix elements?
+  Existing Muon beams
+    PSI
+    ISIS
+==============================================================================
+MuSIC
+  RCNP cyclotron
+  proton transport?
+  pion capture solenoid
+  muon transport
+  detector area
+==============================================================================
+Physics
+  charged particle/matter x-actions
+    Ionisation
+    scintillation
+    bremsstrahlung 
+  muon x-actions
+    decay
+  nuclear muon x-actions
+    Decay in orbit
+    nuclear capture
+    muonic x-rays (for comparison to hino-san's measurements)
+  Muon production
+    pion production in proton/carbon target
+    pion decay
+    pion/muon type: surface/sub-surface/cloud
+==============================================================================
+Simulation
+  set up
+    G4bl
+    geant4
+  Geometry
+    physical
+      approximations
+      sizes
+    materials
+      important properties
+        A, Z, density
+      additional properties
+        scintillation yield, absorption, WLS
+    magnetic ?
+      Dipole
+      Main
+  physics lists
+    Confirmation of capture rates
+    Hadron production (G4BL)
+    Transport
+    Checks
+      Use mickey-mouse sims (decay, decay in target, etc)
+  data analysis?
+==============================================================================
+Early measurements (particle flux, muon component)
+  Experimental set up
+    Scintillators
+    Readout circuit
+    DAQ
+    Readout software
+  run summaries
+    table
+    ....?
+  analysis & results
+    cuts
+    assumptions
+==============================================================================
+Momentum spectrum
+  Experimental set up
+    scintillators & mounting
+    Calibration
+      Timing
+      ADC?
+    DAQ
+  Run summaries
+    Mg & Cu info
+    Mo bombardment info
+    
+  analysis
+    Binning
+    Noise
+    Cuts
+  results
+    Cf simulation
+==============================================================================
+Conclusion
+XFEL
