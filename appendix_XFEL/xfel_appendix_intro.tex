@@ -1,22 +1,150 @@
-\part{LPD-CCC Interface} % (fold)
+\part{Clock and Control interface for the Large Pixel Detector} % (fold)
 \label{prt:lpd_ccc_interface}
+
+% TODO XFEL abstract Rewrite this? 
+% \begin{abstract}
+% This is a discussion of the work carried out designing the firmware for the Clock and Control Card (CCC) interface for the Large-Pixel Detector at the European X-ray Free-Electron Laser (EuXFEL). There will be a brief discussion of EuXFEL, its aims, the detectors and control systems then a more in-depth look at the design, implementation and testing of the final design.
+% \end{abstract}
 \chapter{Introduction} % (fold)
 \label{cha:lpd_ccc_introduction}
-\section{XFEL: an overview} % (fold)
+\section{The European X-ray Free-Electron Laser: an overview} % (fold)
 \label{sec:xfel_an_overview}
-The European~XFEL (X-ray Free-Electron Laser) is a 3.4~km X-ray source under-construction below Hamburg in Germany. The project is scheduled to begin operation in 2016 with construction finishing in 2015. To produce the x-rays electrons are accelerated to 17.5~GeV then passed through an `undulator' where the electrons emit synchrotron radiation (i.e.\ x-rays). The x-rays have a wavelength of between 0.05~nm and 4.7~nm\footnote{This corresponds to photon energies from 25~keV to 0.26~keV respectively.}. 
-    
-There are currently 3 detectors being designed for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three detectors share a common set of requirements~\cite{xfel_website}:
-\begin{description}
-    \item[Swiftness] XFEL produces 27,000 X-ray pulses per second, ideally all of these need to be recorded.
-    \item[Dynamic range] In any one flash the number of photons received by any portion of the detector can vary massively (between 1 and \(10^5\)~\cite{lpd_manual}) this information needs to be preserved by the detector.
-    \item[Radiation resistance] When fully operational XFEL is intended to be used nearly continuously, obviously any detector used has to be able to survive the harsh environment at the end of the beam-line.
-\end{description}
-Each detector is controlled during operation through the Clock and Control Card (CCC) that provides an interface to the common timing system and basic control. The detectors have to provide their own translation layer that is responsible for creating the interface between the CCC and their own hardware. 
+% TODO xfel over view probably want to add a brief section on other experiments (LCLS, Spring8 & synchrotrons)
+The European X-ray Free-Electron Laser (EuXFEL) is a 3.4~km Free-Electron Laser (FEL) being constructed below Hamburg, Germany. The project is scheduled to begin operation in 2016 with commissioning beginning in 2015. EuXFEL is built upon expertise and concepts prototyped at the Free-electron Laser in Hamburg (FLASH) which is operated by DESY although EuXFEL will be operated as an independent research facility. 
 
-For the Large Pixel Detector the interface is hosted on a dedicated card called the Front End Module (FEM), each FEM controls a single `supermodule', the final LPD will comprise 16 supermodules. Slow control of the FEM (i.e.\ for configuration) is executed via a custom control channel which is separate to the generic CCC.
+Instead of using undulators as merely a method of forcing electrons to emit X-rays (as \(3^{rd}\)~generation synchrotrons do) FELs use much longer undulators to shape the electron beam itself. Micro-bunching is caused as slower electrons absorb the X-rays emitted from faster, following, electrons and faster electrons are slowed as they emit; the result of this is that instead of a single long pulse many small bunches are created that emit light coherently with a much greater brilliance than is seen in synchrotrons.
+
+Production of X-rays at EuXFEL is done by accelerating electrons to 17.5~GeV using a superconducting linear accelerator before passing them through an `undulator' where they produce synchrotron radiation (i.e.\ X-rays). The X-rays at EuXFEL have a wavelength of between 0.05~nm and 4.7~nm, this corresponds to photon energies from 25~keV to 0.26~keV respectively. Each pulse of light will have an average duration of \(\sim\)100~fs and there will be 27,000 flashes per second arranged into 10 `trains', each lasting \(600~\mu\)s. Figure~\ref{fig:xfel-brightness} shows the predicted peak brilliance and energies of X-rays produced at EuXFEL as well as a selection of other existing sources. The divide in brilliances is due to the technology used to power the source, XFEL, FLASH and LCLS all use free electron laser (FEL) system whilst the others are synchrotron sources which gives them a larger range but much lower peak brilliance. 
+
+\begin{figure}[h]
+  \centering
+    \includegraphics[width=.9\textwidth]{images/Other/XFEL-comparitive_energy-brightness.png}
+  \caption{Plot of peak X-ray brilliance against energy for a range of current sources as well as the predicted values for EuXFEL (here labelled `XFEL'). The blue dots show measured peak brilliance for several energies at the existing FLASH facility.}
+  \label{fig:xfel-brightness}
+\end{figure}
+
+% subsection existing_x_ray_sources (end)
+\subsection{Scientific Motivation} % (fold)
+\label{sub:scientific_motivation}
+% TODO Scientific Motivation: (low priority) read through the TDR section
+% TODO Scientific Motivation: (low priority) Try and add some more detail
+The primary aim of EuXFEL is to study conditions previously unseen in a laboratory setting. This aim is achieved through three core properties of EuXFEL: `coherence, ultra-high brilliance and time structure' \cite{CITEATION FOR THE TDR} the combination of these gives access to three broad areas of study: the tiny, the fast and the extreme. In all of these regimes there is much that is unknown or yet to be tested which in turn will lead to new discoveries, new technology and refined techniques.
+
+The imaging of the tiny relies on the wavelength of the light used being comparable to the scale of the structure to be imaged. At EuXFEL as well as having a sufficiently small wavelengths of light (X-rays) to image molecules, due to the coherent nature of the light none-repeating structures can also be imaged. Whilst the brilliance of the beam will destroy most samples very quickly tests at FLASH show that enough time remains to produce a detailed image of the sample, even if it has not been crystallised. This means that larger structures can be imaged at an atomic scale (e.g.\ entire viruses) or structures won't crystallise or only form very small, low quality crystals (e.g.\ protein membranes).
+
+The third of EuXFEL's core properties, time-structure, provides the potential of the second regime, speed. As each individual flash lasts less than \( \sim \)100~fs and each train comprising of 2,700 flashes it's possible to `film' processes as they occur. This will make it possible for researchers to understand what happens during a phase transition or when a material reverses its magnetisation by watching it happen.
+
+The final regime, the extreme, is driven by EuXFEL's brilliance. Able to recreate extreme temperatures and pressures EuXFEL will be able to use `pump and probe' techniques to map, for example: the propagation of shockwaves through a plasma or to image the stresses on a component under extreme magnetic fields.
+% subsection scientific_motivation (end)
 % section xfel_an_overview (end)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+\section{Detectors at EuXFEL} % (fold)
+\label{sub:detectors_at_euxfel}
+In order to achieve EuXFEL's scientific program a broad range of detectors are required. For almost all planned experiments there is a need to image the beam's interaction with the target, the standard solution to this is a 2D pixel detector. This type of detector consists of an array of light sensitive pixels, this gives both position and intensity information about the incident light, with minor reconstruction an image of the target can then be formed. The basic requirements for the 2D pixel detectors at EuXFEL are~\cite{xfel_website}:
+\begin{description}
+    \item[Swiftness] EuXFEL produces 27,000 X-ray pulses per second, ideally all of these need to be recorded.
+    \item[Dynamic range] In any one flash the number of photons received by any portion of the detector can vary massively (between 1 and \(10^5\)~\cite{lpd_manual}) this information needs to be preserved by the detector.
+    \item[Radiation resistance] When fully operational EuXFEL is intended to be used nearly continuously, obviously any detector used has to be able to survive the harsh environment at the end of the beam-line.
+\end{description}
+
+There are currently three 2D pixel detectors being designed for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three use the above requirements as a base but have employed different technologies in order to meet them.
+
+The main differences between the three detectors are in their implementation of the high dynamic range: LPD and AGIPD both have three different gain levels giving them the required range, whilst DSSC uses the non-linearity of its DEPFET to achieve it. There are a few other significant differences: AGIPD uses dynamic switching to select the appropriate gain; DSSC has hexagonal pixels (AGIPD and LPD have square) and LPD has an entire pipeline for each gain level (this means that when a narrower gain is required it can be set and all three pipelines used for storage). 
+
+\subsection{The Large Pixel Detector (LPD)} % (fold)
+\label{sub:the_large_pixel_detector_lpd}
+The Large Pixel Detector (LPD) is a 2D, 1~Mega-pixel detector designed at the Rutherford Appleton Laboratory in the UK. The detector is designed to be modular with 1~Megapixel being made up of 16 `supermodules', each supermodule contains a single Front End Module (FEM) that controls and reads out the 128 Application Specific Integrated Circuits (ASICs) that in turn control 512 individual pixels i.e.\ each supermodule is 65,536 pixels divided between 128 ASICs with 1 FEM. It is the FEM that then communicates with the generic elements of EuXFEL: the Clock and Control Card (CCC) and the Train Builder (TB).
+    
+2 lines are used to control the ASIC during operation: clock (\texttt{clk}) and control (\texttt{cmd}) with a third, slow line being used for configuration. The CCC-interface is responsible for receiving the generic signals from the CCC and converting them to those expected by the ASIC. There are a large number of commands that the ASIC expects in order to function (a full list is given in appendix~\ref{app:asic_command_words}). These commands fall into a a few general groups: starts, (no-)veto\footnote{The ASIC actually uses a `trigger' rather than a `veto', but for consistency with the overall EuXFEL documentation we will use `no-veto' and `veto' to refer to `trigger' and `nop' respectively}, stops, resets, and configuration. In each of these sets of commands there are generally two or tree individual command words that affect a specific component of the ASIC (e.g.\ reset the write pointer, start the trigger pointer). 
+
+ % The set of commands used to control the ASIC are more verbose than those received from the CCC . 
+    
+The FEM that controls the supermodule uses a Xilinx~Virtex-5 FPGA, this has two embedded PowerPC440 processors that manage the resources on the FEM (e.g.\ writing control registers and the dedicated RAM) as well as create the UDP/IP packets that transfer the data from read from the ASIC to the TB. In addition to the CCC-interface there is firmware to organise the read out data from the ASICs, and control configuration. As well as the Virtex-5 there are 2 further Xilinx~Spartan-3's that control fan out of the signals to the individual ASICs.
+
+% The control signals from the CCC to the ASIC are processed in dedicated firmware that maintains a constant latency along this pathway. The signals produced by this block are fanned out using 2 further FPGAs (Xilinx~Spartan-3's) that are sent out to the ASICs on the backplane connector.
+    
+
+% subsection the_large_pixel_detector_lpd (end)
+% section detectors_at_euxfel (end)
+\section{DAQ and control systems} % (fold)
+\label{sec:daq_and_control_systems}
+In a project the scale of EuXFEL there are a large number of different subsystems that need to communicate flawlessly in order to operate. Not only does a single common clock need to be distributed between all systems but it needs to compensate for the time to transmit a signal between the different components and how this latency may change depending on local conditions (e.g.\ the temperature).
+
+To this end there are several layers of timing and control system used at EuXFEL: top-most is the master oscillator, this is distributed via the timing transmitters to the various systems along with global information about the intended run (e.g.\ the `bunch pattern'). These subsystems must then respond as required to the bunch pattern and any commands received. In addition to globally distributed commands there is also the requirement of intra-system information such as vetoes. 
+
+In the case of the 2D detectors two common control systems were decided upon to act as a common interface to the global timing receivers. The first of these systems is the Clock and Control Card (CCC) which is a client of the timing receiver card that filters commands for its 2D detector clients and distributes a synchronised clock for their use. The second system is the common Train Builder (TB) that acts as a data marshalling card for the various detectors: collating their readout, re-ordering it as required and dispatching it to the batch farm.
+
+\subsection{Clock and Control Card} % (fold)
+\label{sub:clock_and_control_card}
+\begin{figure}[h]
+  \centering
+    \includegraphics[width=.9\textwidth]{appendix_XFEL/images/Other/CCC_RJ45_diagram.png}
+  \caption{The CCC RJ45 wiring diagram.}
+  \label{fig:CCC_RJ45_diagram}
+\end{figure}
+
+As discussed above the Clock and Control Card (CCC) is one of two cards common to all 2D detectors, it has four primary functions in EuXFEL: distribution of the clocks required to maintain synchronicity with the rest of the machine, signalling of veto information for each bunch, control of the attached FEMS and collection of status information. In addition to these requirements it can also operate in standalone mode (detached from a TR board) in order to facilitate testing and for use at other locations (e.g.\ LCLS). 
+
+The CCC communicates with any attached FEMs via RJ45 (see figure~\ref{fig:CCC_RJ45_diagram}), the four paired wires carry the four signals as required: clock, fast-command, veto and status. The clock signal is 99~MHz derived from the TR, the fast command line carries information about each train whilst the veto line carries information on whether a bunch should be kept, the status line returns the received clock to indicate correct connections. Each of these lines (with the exception of the status) are discussed below.
+
+% subsection clock_and_control_card (end)
+\subsubsection{Clock signal} % (fold)
+\label{sub:clock_signal}
+\begin{figure}[h]
+  \centering
+    \includegraphics[width=.9\textwidth]{appendix_XFEL/images/Other/XFEL-time_structure.png}
+  \caption{The timing structure of electrons at EuXFEL and the resultant X-ray pulses. }
+  \label{fig:XFEL-time_structure}
+\end{figure}
+
+An interesting aspect of EuXFEL is its timing structure, rather than a simple monoatomic pulse it has two regular bunch trains containing several thousand pulses (or `bunches') each. The trains arrive at a rate of 10~Hz with each lasting only 600~\(\mu\)s but containing up to 2,700 100~fs bunches each separated from the next by \( \sim \)220~ns figure~\ref{fig:XFEL-time_structure} shows this.
+
+This timing structure forces the detectors to use the time between bunches for data readout while during the bunch train they are limited to just storing data. This means that each detector is limited by the length of its on-ASIC pipeline with regards to how much data it can store (for LPD this is either 512 frames if using all three gain levels or 1536 if only using one). This structure also means there are two cycles that the detectors need to be aware of: firstly the bunch clock (\(\sim\)4.5~MHz) and secondly the bunch-train clock (\(\sim\)10~Hz). Finally, in addition to these two machine imposed clocks there is the common CCC fast clock that is used for transmitting commands from the CCC which has a frequency of \(\sim\)99~MHz.
+% subsection clock_signal (end)
+\subsubsection{Control signal} % (fold)
+\label{sub:control_signal}
+The control signal is used to convey information about the train. This information comes in four parts: when the next train will start, when it will stop, which train it is (its ID) and what bunch pattern applies (see section~\ref{sub:veto_signal}, below). There is also a reset command to indicate that the ASIC and FEM should be reset to a known state. 
+
+The start signal is assumed to arrive, with some fixed latency, ahead of the first bunch in the train. The stop signal is similarly assumed to have some fixed latency from the last. In addition to warning of the beginning of the train the start signal also has an attached payload of information about the train: the train ID and the bunch pattern. The specification for these signals is given in table
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c | c | c | c}
+    Command  & Bits & Payload & Description \\
+    \hline   
+    START    & 1100 & Train ID (32b), bunch pattern ID (8b), checksum (8b) & Start of the train \\
+    STOP     & 1010 & none                                                 & End of the train \\
+    RESET    & 1001 & none                                                 & Reset the FEM and ASIC \\
+    reserved & 1111 & n/a                                                  & n/a\\
+  \end{tabular}
+  \end{center}
+  \caption{Specification of the fast command signals and their payloads.}
+  \label{tab:fast_commands}
+\end{table}
+% subsubsection control_signal (end)
+\subsubsection{Veto signals} % (fold)
+\label{sub:veto_signal}
+Given the previous discussion of the 2D detectors at EuXFEL (section~\ref{sub:detectors_at_euxfel}) it is obvious that it is impossible for them to record all 2.700 bunches of the data, equally with a single linac being divided between five, and later ten, experimental stations not every detector will be receiving all of the bunches for every train. To account for this there are two veto systems that allow the detectors to select which bunches they should record for processing: the `bunch pattern' and the online veto. Either of these two sources may veto a bunch so it is only recorded if neither source vetoes it. 
+
+The bunch pattern veto (although it is more of a trigger) is derived from the global configuration of the machine: if, for example, the first half of the electron beam is being sent to another experimental station the detector will receive a pattern that tells it to veto that portion of the train. The patterns act as masks: for each bunch in a train the pattern states whether it should be vetoed or not. The bunch patterns are decided ahead of time, and loaded when the FEM is configured the bunch pattern to be used for each train is signalled prior to its arrival as part of the start signal sent via the command line.
+
+The online vetoes are mainly situational, if the beam doesn't lase or there is an fault there is rarely any point taking data, in which case those bunches should be vetoed. These online vetoes can have any source and the signals are supplied to a dedicated veto unit that is external to the CCC. The CCC will in turn pass on the veto or no-veto signal to the FEM of the detector, either with an attached bunch ID or with a fixed latency from the bunch in question depending on the specifications of the detector. There is an additional `golden' mode that selects bunches that should be preferentially kept giving three levels of selection: dispose, keep if possible and keep although this is not implemented for LPD. It is these veto signals that are received via the veto line as well as the bunch ID (which LPD ignores) the structure of these signals is given in table~\ref{tab:veto_spec}.
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c|c|c|c}
+    Command & Bits & Payload                        & Notes\\
+    \hline
+    VETO    & 110  & \multirow{2}{*}{Bunch ID (8b)} & Veto this bunch \\
+    NOVETO  & 101  &                                & Record this bunch \\
+    reserved& 111  & n/a                            & n/a \\
+  \end{tabular}
+  \end{center}
+  \caption{Veto signal specification}
+  \label{tab:veto_spec}
+\end{table}
+% subsection the_clock_and_control_card_ccc (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% section daq_and_control_systems (end)
 \section{Firmware} % (fold)
 \label{sec:firmware}
 Firmware refers to programs that are run from persistent memory (rather than being loaded into volatile memory), more generally it tends to operate at the interface between hardware and software. Firmware sacrifices some of the flexibility (in terms of portability and complexity) in order to gain speed by running directly on the hardware. 
@@ -24,97 +152,5 @@ Firmware refers to programs that are run from persistent memory (rather than bei
 There are a variety of languages for writing firmware the one used for LPD is VHSIC Hardware description language (VHDL). VHDL works by describing the expected operation of various discrete blocks within the firmware, these descriptions are then translated (synthesised) into bit-code that the chip can run. Testing is done using simulation of the system as well as on-chip testing.
 
 For the LPD firmware is run on Field Programmable Gate Arrays (FPGA) which combine logic `slices' and on board memory to create flexible and powerful chips. This means that software can be used to control configuration settings for the firmware which then can run with very low latencies and in a highly predictable manner.
-
-% Firmware was run on Field Programmable Gate Arrays (FPGA) which 
-% Firmware is the name given for programs that are executed from persistent memory rather than volatile memory, more generally it is what lies between hardware and software. One of the most common forms of programmable hardware are `Field Programmable Gate Arrays' (FPGAs) these are literally chips who's logic can be re-written at any time. 
-% TODO FIX ALL OF THIS IT SUCKS
-% An FPGA is made from many discrete `slices' each slice comprises a look up table and some amount of logic that means that the FPGA as a whole can be programmed to run a large variety of different programs. This gives an FPGA much greater flexibility over what it can perform compared to custom designed chips (ASICs) as they can have their logic re-written as required, it does also mean that they can generally not be used in such 
 % section firmware (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Clock and Control Card (CCC)} % (fold)
-\label{sec:the_clock_and_control_card_ccc}
-With bunches every 220~ns timing has to be carefully controlled across the many systems  that make up XFEL (e.g.\ accelerator, undulators), this is done using a common clock that is distributed via a common interface. To maintain a simple interface for the detectors they all use a common `Clock and Control Card' (CCC) that ensures only information relevant to the detectors is passed to them (e.g. when a train is about to start). 
-    
-Information is supplied from the CCC over 4 lines: command (cmd), veto, clock and a status line (see table~\ref{tab:ccc_spec}). Of the 4 lines the \texttt{cmd} and \texttt{veto} are most important to us (the \texttt{clk} only contains the clock and the \texttt{status} line is currently intended to return a heartbeat\footnote{i.e.\ the \texttt{clk} in order to confirm operation.}). Between the \texttt{cmd} and \texttt{veto} lines there are 5 commands that concern us and to which responses need to be made: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (see table~\ref{tab:ccc_commands}).
-\begin{table}
-    \begin{center}
-        \begin{tabular}{c|l}
-            Line & Notes \\
-            \hline
-            clk    & Fast clock derived from the system clock (likely 99.31~MHz).\\
-            cmd    & Fast command signals (\texttt{START}, \texttt{STOP} etc.)   \\
-            veto   & Veto/no-veto.                                               \\
-            status & Return line from the ASIC to the CCC.                       \\
-        \end{tabular}
-    \end{center}
-    \caption{Clock and control card signal specification}
-    \label{tab:ccc_spec}
-\end{table}
-    
-\begin{table}
-    \begin{center}
-        \begin{tabulary}{\textwidth}{c | c | c | C | l}
-            Line & Command & Value & Payload & Description \\
-            \hline
-            \multirow{5}{*}[11.5pt]{Control} 
-            & START & 1100 & Train ID (32b), bunch pattern ID (8b), checksum (8b) & Start of the train \\
-            & STOP  & 1010 & none                                                 & End of the train \\
-            & RESET & 1001 & none                                                 & Reset the FEE and ASIC \\
-            \hline
-            
-            \multirow{2}{*}{Veto} 
-            & VETO   & 110 & \multirow{2}{*}{Bunch ID (8b)} & Veto this bunch \\
-            & NOVETO & 101 &                                & Record this bunch \\
-        \end{tabulary}
-    \end{center}
-    \caption{Command definitions for the fast and veto lines from the CCC, see \cite{xfel_veto_spec} for more details.}
-    \label{tab:ccc_commands}
-\end{table}
-    
-% section the_clock_and_control_card_ccc (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Large Pixel Detector (LPD)} % (fold)
-\label{sec:the_large_pixel_detector_lpd}
-The Large Pixel Detector (LPD) is a 2D, 1~Mega-pixel detector designed at the Rutherford Appleton Laboratory in the UK. The detector is designed to be modular with 1~Megapixel being made up of 16 `supermodules', each supermodule contains 128 Application Specific Integrated Circuits (ASICs) controlled by a single Front End Module (FEM). The ASICs each control and readout 512 pixels (i.e.\ each supermodule has 65,536 pixels).
-    
-The ASIC used is responsible for readout of the pixels 2 lines are used to control the ASIC during operation: \texttt{clk} and \texttt{cmd}. The clock signal is the same received from the CCC. The command line sends words that communicate the various commands received from the CCC. The set of commands used to control the ASIC are more verbose than those received from the CCC (see chapter~\ref{cha:asic_command_words}). 
-    
-The FEM that controls the supermodule uses a Xilinx~Virtex-5 FPGA, this uses two embedded PowerPC440 processors. These processors are used to manage the resources on the FEM (e.g.\ writing control registers and the dedicated RAM) as well as create the UDP/IP packets that transfer the data from read from the ASIC to the `train builder'. The control signals from the CCC to the ASIC are processed in dedicated firmware that maintains a constant latency along this pathway. The signals produced by this block are fanned out using 2 further FPGAs (Xilinx~Spartan-3's) that are sent out to the ASICs on the backplane connector.
-    
-The ASIC uses 20b commands that are synchronised to the bunches in the beam-line. Each word starts with a synchronisation bit then 8b of command the remainder of the word is 0's (other than a re-synchronisation command which uses all 20b). For the CCC-\texttt{cmd} line commands (i.e.\ \texttt{START}, \texttt{STOP} and \texttt{RESET}) the ASIC requires multiple words to enter the require state (e.g.\ for \texttt{START} 6 words need to be sent).
-% section the_large_pixel_detector_lpd (end)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \section{Firmware, VHDL and FPGAs} % (fold)
-% \label{sec:firmware_vhdl_and_fpgas}
-% 
-% % section firmware_vhdl_and_fpgas (end)
-% section introduction (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
-    
-    
-    
-% The Large Pixel Detector (LPD) is being built for the European X-ray Free-Electron Laser (Eu-XFEL). To maintain synchronisation between the machine and the detectors a common Clock and Control Card (CCC) is being developed. To communicate with the LPD-ASIC a Front End Electronics card (FEE) has been developed that will act as a fan out for commands and provide detector specific control.
-%     
-%     In order to control the ASIC via the CCC interface firmware was written to act as a translator unit. Translation was split into three separate sub-blocks: CCC-signal receiver, a veto filter and the ASIC command transmitter. Between the three blocks the messages from the CCC are interpreted, processed and encoded for the ASIC. 
-%     
-%     Table~\ref{tab:ccc_spec} gives the specification of the CCC interface whilst table~\ref{tab:asic_spec} is the ASIC interface. The CCC specification specifies 5 command words for the cmd and veto lines that the interface needs to interpret: \texttt{START}, \texttt{STOP}, \texttt{RESET}, \texttt{VETO} and \texttt{NO-VETO} (full specification of these are given in table~\ref{tab:ccc_commands}). Each of these command words correspond to either a single word or a sequence that must be sent to the ASIC. \texttt{START}, \texttt{STOP} and \texttt{RESET} all have multi-word sequences associated to them whilst \texttt{VETO} and \texttt{NOVETO} are communicated with single words. The command sequences for the ASIC are specified in the LPD manual~\cite{lpd_manual}, the command words are given in appendix~\ref{cha:asic_command_words}.
-%     
-% 
-%     \begin{table}
-%         \begin{center}
-%             \begin{tabular}{c|l}
-%                 Line       & Notes                                       \\
-%                 \hline
-%                 CLK        & The system clock, as received from the CCC. \\
-%                 SERIAL\_IN & Serial command line.                        \\
-%             \end{tabular}
-%         \end{center}
-%         \caption{ASIC signal specification}
-%         \label{tab:asic_spec}
-%     \end{table}
-%   
-
-%     % section introduction (end)
-%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
