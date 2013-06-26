@@ -22,10 +22,10 @@ Implementation
    Generics
    Registers
    Implementation
-  Basic Use    --Probably not needed-- Moved to appendix, de-fluffed
-    Veto pattern BRAM
-    Transmitter control register
-    Transmitter BRAM
+  # Basic Use    --Probably not needed-- Moved to appendix, de-fluffed
+  #   Veto pattern BRAM
+  #   Transmitter control register
+  #   Transmitter BRAM
   Receiver
     Interface
     Implementation
