@@ -4,8 +4,16 @@
 \section{Conventions} % (fold)
 \label{sec:conventions}
 Throughout this document there are several typographical conventions that are observed (see table~\ref{tab:typography}).
-% additionally `signal', `lines' and `ports' are used interchangeably to refer to bit(s) of information passed through an interface, either between blocks (e.g.\ from a state-machine to memory) or between cards (e.g.\ between the CCC and FEM). The term `registers' is used to refer to both single (small) blocks of memory and large on-chip block memory (BRAM). Finally a `command word' is a collection of bits that have a specific value and meaning and are presented either serially or in parallel, at an implementation level these are no different from states (which are merely numerical identifiers for the current state) but for clarity these are treated differently i.e.\ command words are transmitted whilst states are internal and not transmitted.
-\begin{table}
+% CAPS           = states          e.g. IDLE, 
+% bold(CAPS)     = generic         e.g. BUNCH_LENGTH 
+% textttt{CAPS}  = commands        e.g. SET_TRIGGER_FLAG
+% textttt{lower} = ports/signals   e.g. start_i
+% 
+% 
+% veto from ccc->veto to asic 7 clk
+% start from ccc->start to asic 6 clk
+% above due to requirements to sync to 4.5 MHz
+\begin{table}[htbp]
   \begin{center}
   \begin{tabular}{c|c}
     Type or prefix                  & Meaning                             \\
@@ -44,14 +52,14 @@ The use of undulators is key to producing a FEL, rather than at a synchrotron wh
 \subsection{X-ray production at EuXFEL} % (fold)
 \label{sub:x_ray_production_at_euxfel}
 At EuXFEL electrons are accelerated to 17.5~GeV using a superconducting linac and the X-rays are produced in one of three SASE undulators which can be combined with conventional undulators to produce photon energies from 25~keV to 0.26~keV which correspond to wavelengths of between 0.05~nm and 4.7~nm the proposed layout can be seen in figure~\ref{fig:XFEL_layout}. EuXFEL is predicted to be able to supply 27,000 pulses of X-ray light (`bunches') per second, with each pulse having a duration of \( \sim \)100~fs. The bunches are split over 10 `trains' per second, each containing up to 2,700 bunches each and lasting \( 600~\mu\)s. The predicted cumulation of all this is a peak brilliance of 10\(^{33}\)~photons/s/mm\(^2\)/mrad\(^2\)/0.1\%BW, for the comparison the energy and peak brilliance of several existing sources (FEL and synchrotron) is given in figure~\ref{fig:xfel-brightness}, as can be seen FELs (FLASH, LCLS) have a much higher peak brilliance although, generally, with a reduced range in energy.
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
     \includegraphics[width=.9\textwidth]{appendix_XFEL/images/Other/XFEL_layout.png}
   \caption{Schematic of the beam-lines for EuXFEL, black denotes electrons whilst red corresponds to X-rays.}
   \label{fig:XFEL_layout}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
     \includegraphics[width=.9\textwidth]{images/Other/XFEL-comparitive_energy-brightness.png}
   \caption{Plot of peak X-ray brilliance against energy for a range of current sources as well as the predicted values for EuXFEL (here labelled `XFEL'). The blue dots show measured peak brilliance for several energies at the existing FLASH facility, `FLASH (seeded)' is a proposed extension using a micro-bunch `seeded' electron beam.}
@@ -62,9 +70,9 @@ At EuXFEL electrons are accelerated to 17.5~GeV using a superconducting linac an
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Scientific Motivation} % (fold)
 \label{sub:scientific_motivation}
-There are two primary problems with more traditional synchrotrons: incoherent light and pulse length. As the light is produced in a long bunch of electrons it has no over-all phase this means that only samples that are crystalline (or can be crystallised, i.e.\ grown into a repeating pattern) can be imaged. Many structures form only poor crystals or can't form them at all. The X-ray pulse length that synchrotrons produce, whilst under normal operating conditions, are generally of order 10--100~ps~\cite{SYNCH REVIEW REF} obviously this places a lower limit on the speed of things that you can `film', again limiting the range of experiments that can be carried out. FELs solve both of these problems by producing coherent light that can have a very short pulse length, additionally because of the SASE process the peak brilliance of a FEL is vastly increased (see figure~\ref{fig:xfel-brightness}).
+There are two primary problems with more traditional synchrotrons: incoherent light and pulse length. As the light is produced in a long bunch of electrons it has no over-all phase this means that only samples that are crystalline (or can be crystallised, i.e.\ grown into a repeating pattern) can be imaged. Many structures form only poor crystals or can't form them at all. The X-ray pulse length that synchrotrons produce, whilst under normal operating conditions, are generally of order 10--100~ps~\cite{xfel_detector_requirements} obviously this places a lower limit on the speed of things that you can `film', again limiting the range of experiments that can be carried out. FELs solve both of these problems by producing coherent light that can have a very short pulse length, additionally because of the SASE process the peak brilliance of a FEL is vastly increased (see figure~\ref{fig:xfel-brightness}).
 
-The primary aim of EuXFEL is to study conditions previously unseen in a laboratory setting. This aim is achieved through three core properties of EuXFEL: `coherence, ultra-high brilliance and time structure'~\cite{CITETION FOR THE TDR} the combination of these gives access to three broad areas of study: the tiny, the fast and the extreme. Because of the limitations of incoherent light, pulse length and brilliance none of these regimes are easily studied at synchrotrons.
+The primary aim of EuXFEL is to study conditions previously unseen in a laboratory setting. This aim is achieved through three core properties of EuXFEL: `coherence, ultra-high brilliance and time structure'~\cite{xfel_tdr} the combination of these gives access to three broad areas of study: the tiny, the fast and the extreme. Because of the limitations of incoherent light, pulse length and brilliance none of these regimes are easily studied at synchrotrons.
 
 The imaging of the tiny relies on the wavelength of the light used being comparable to the scale of the structure to be imaged. At EuXFEL as well as having X-ray wavelengths sufficient to image molecules, due to the coherent nature of the light non-repeating structures can also be imaged unlike at traditional synchrotrons. Whilst the brilliance of the beam will destroy most samples very quickly tests at FLASH show that enough time remains to produce a detailed image of the sample, even if it has not been crystallised. This means that larger structures can be imaged at an atomic scale (e.g.\ entire viruses) or structures that won't crystallise or only form very small, low quality crystals (e.g.\ protein membranes).
 
@@ -76,14 +84,14 @@ The final regime, the extreme, is driven by EuXFEL's brilliance. Able to recreat
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 \section{Detectors at EuXFEL} % (fold)
 \label{sub:detectors_at_euxfel}
-In order to achieve EuXFEL's scientific program a broad range of detectors are required. For almost all planned experiments there is a need to image the beam's interaction with the target, the standard solution to this is a 2D pixel detector. This type of detector consists of an array of light sensitive pixels that give both position and intensity information about the incident light, with minor reconstruction an image of the target can then be formed. The basic requirements for the 2D pixel detectors at EuXFEL are~\cite{xfel_website}:
+In order to achieve EuXFEL's scientific program a broad range of detectors are required. For almost all planned experiments there is a need to image the beam's interaction with the target, the standard solution to this is a 2D pixel detector. This type of detector consists of an array of light sensitive pixels that give both position and intensity information about the incident light, with minor reconstruction an image of the target can then be formed. The basic requirements for the 2D pixel detectors at EuXFEL are~\cite{xfel_tdr}:
 \begin{description}
     \item[Swiftness] EuXFEL produces 27,000 X-ray pulses per second, the detector needs to be able to record a large number of these.
     \item[Dynamic range] In any one flash the number of photons received by any portion of the detector can vary massively (between 1 and \(10^5\) photons~\cite{lpd_manual}) this information needs to be preserved with a good signal to noise ratio by the detector.
     \item[Radiation resistance] When fully operational EuXFEL is intended to be used nearly continuously, obviously any detector used has to be able to survive the harsh environment at the end of the beam-line.
 \end{description}
 
-There are currently three 2D pixel detectors being built for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD), DEPFET Sensor with Signal Compression (DSSC) and Large Pixel Detector (LPD). All three satisfy the above requirements through a variety of technologies.
+There are currently three 2D pixel detectors being built for use at XFEL: Adaptive Gain Integrating Pixel Detector (AGIPD)~\cite{agipd_spec}, DEPFET Sensor with Signal Compression (DSSC)~\cite{dssc_spec} and Large Pixel Detector (LPD)~\cite{lpd_spec}. All three satisfy the above requirements through a variety of technologies.
 
 The main differences between the three detectors are in their approach to the dynamic range: LPD and AGIPD both have three separate gain levels giving them the required range, whilst DSSC uses the non-linearity of its DEPFET to achieve a similar outcome. There are a few other significant differences: DSSC has hexagonal pixels (AGIPD and LPD have square); AGIPD uses dynamic switching to select the appropriate gain for each pixel before storing it in a single pipeline and LPD has an entire pipeline for each gain level (this means that when a narrower gain is required it can be set and all three pipelines used for storage). 
 
@@ -112,7 +120,7 @@ In addition to these requirements the CCC can also operate in standalone mode (d
 The CCC communicates with FEMs via RJ45 (see figure~\ref{fig:CCC_RJ45_diagram}), the four paired wires carry signals: clock, fast-command, veto and status. The clock signal is a \(\sim\)99~MHz derived from the TR and synchronised to the, \(\sim\)4.5~MHz, bunch clock, the fast command line carries information about each train whilst the veto line carries information on whether a bunch should be kept, the status line returns the received clock to indicate good connections.
 \subsection{Clock and Control Card (CCC)} % (fold)
 \label{sub:clock_and_control_card}
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
     \includegraphics[width=.9\textwidth]{appendix_XFEL/images/Other/CCC_RJ45_diagram.png}
   \caption{The CCC RJ45 wiring diagram.}
@@ -123,7 +131,7 @@ The CCC communicates with FEMs via RJ45 (see figure~\ref{fig:CCC_RJ45_diagram}),
 \subsubsection{Clock signal} % (fold)
 \label{sub:clock_signal}
 Rather than a simple monoatomic time structure EuXFEL it has two super-imposed patterns: the bunch trains and the bunches. The trains arrive at a rate of 10~Hz with each lasting only 600~\(\mu\)s but containing up to 2,700\( \times\)100~fs bunches, each separated from the next by \(\sim\)220~ns (i.e.\ a rate of \(\sim\)4.5~MHz), figure~\ref{fig:XFEL-time_structure} shows this.
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
     \includegraphics[width=.9\textwidth]{appendix_XFEL/images/Other/XFEL-time_structure.png}
   \caption{The timing structure of electrons at EuXFEL and the resultant X-ray pulses. }
@@ -139,7 +147,7 @@ Note: there is some vagueness as to the exact clock speeds used as, at time of w
 The control signal is used to convey information about each train. This information comes in four parts: when the next train will start, when it will stop, what its ID is and what bunch pattern should be used (see section~\ref{sub:veto_signal}, below). There is also a reset command to indicate that the ASIC and FEM should be reset to a known state. 
 
 The expected use of the control signal is shown in table~\ref{tab:fast_commands}, a \texttt{START} signal arrives with attached train ID and bunch pattern ID, after some number of vetoes the \texttt{STOP} signal is received. Rarely, either when there is a fault or if, for example, the detector's been switch off, the \texttt{RESET} signal will restore the FEM and ASIC to a prepared state.
-\begin{table}
+\begin{table}[htbp]
   \begin{center}
   \begin{tabular}{c | c | c | c}
     Command  & Bits   & Payload & Description \\
@@ -161,7 +169,7 @@ Given the previous discussion of the 2D detectors at EuXFEL (section~\ref{sub:de
 The bunch pattern veto is derived from the global configuration of the machine: if, for example, the first half of the electron beam is being sent to another experimental station the detector will receive a pattern that tells it to veto that portion of the train. The patterns act as masks: for each bunch in a train the pattern states whether it should be vetoed or not. The bunch patterns are decided ahead of time, and a selection of patterns\footnote{Predicted to be fewer than 10.} are loaded when the FEM is configured, the bunch pattern to be used for each train is included in that train's header informationas part of the start signal sent via the command line.
 
 The online vetoes are mainly situational, if the beam doesn't produce any X-rays or there is a fault then there is rarely any point taking data, in which case those bunches should be vetoed. These online vetoes can have any source and the signals are supplied to a dedicated veto unit that is external to the CCC. The CCC will in turn pass on the veto or no-veto signal to the FEM of the detector, either with an attached bunch ID or with a fixed latency from the bunch in question depending on the specifications of the detector. Online vetoes are what is received via the veto line and they have a format given in table~\ref{tab:veto_spec}, currently LPD makes no use of the bunch ID.
-\begin{table}
+\begin{table}[htbp]
   \begin{center}
   \begin{tabular}{c|c|c|c}
     Command & Bits   & Payload                        & Notes\\
