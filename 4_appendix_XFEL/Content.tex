@@ -21,7 +21,7 @@ LPD requires that the interface can talk to the ASIC via the \texttt{clk} and \t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Design Principles} % (fold)
 \label{sec:design_principles}
-% TODO design_principles Come back and re-read this!
+% TODO:xfel design_principles Come back and re-read this!
 The main design principles were that the design be modular, flexible and simple. These criteria have many advantages and a few disadvantages, they are also strongly entwined with the pursuit of one often resulting in the development of another. By using these principles in making design decisions the result is hopefully an interface that not only works but is easy to adapt to future requirements, easy to maintain and understandable.
 
 In design a modular solution has a number of advantages: it can be reused, it can be tested in isolation and it's more understandable. The main cost of this design method is that any solution may not be as fast as a custom one. Whilst reuse of the entities produced is unlikely they do provide strong foundations for similar developments whilst splitting the design into units that have clearer aims and responsibilities. An entity that can be tested on easily, in isolation, is generally desirable as makes understanding and debugging easy, both of these points make understanding an entity easy which, again, makes maintenance easier. A good example of this modularity was the control registers, whilst each version was customised for the specific use case each one was built from the same core design and once that was established further versions were quick and easy to develop and also had a much lower chance of failure.
