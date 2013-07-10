@@ -1,18 +1,38 @@
 \part{Simulation} % (fold)
 \label{prt:simulation}
-% TODO: Simulation: Simulation: write me
+during the design of MuSIC several simulations were created in order to understand its performance and operating parameters. For this work simulations have been used both to design the detectors and understand the data that they have produced. Two core simulations were created, one using G4Beamline (G4BL) and the other using Geant4. 
+
+The G4BL simulation was mainly used to simulate the bulk of MuSIC but due to its limitations (it's unable to simulate detectors) Geant4 was used to simulate the final detectors. The simulations were run using a combination of the UCL batch farm and a personal computer. The batch farm was used for large simulations expected to take many days (for example running G4BL) whilst the PC (a Macbook Pro laptop) was used for faster runs (e.g.\ Geant4).
 \chapter{Technologies} % (fold)
 \label{cha:technologies}
-% TODO: Simulation: Technologies: write me
+As has been discussed above the simulation was split between two systems: G4BL and Geant4. This section will discuss the generalities of these systems before detailed discussion of the Geant4 simulation upon which the bulk of the work was done.
 \section{Geant4} % (fold)
 \label{sec:geant4}
-% TODO: Simulation: Geant4: write me
+Geant4 is described as `a toolkit for the simulation of the passage of particles through matter'~\cite{Geant4 REF}. Rather than a complete program it is a collection of pre-compiled libraries that comprise the basics required to simulate various interactions. It has additional libraries that provide further functionality such as visualisation. 
+
+Geant4 is written in C++ using an object orientated approach that allows the user to either use Geant4's standard implementations or write their own. This flexibility also means that all the functionality of Geant4 is explicitly opt-in making the resultant programs much faster than they would otherwise be. Geant4's speed does come at a cost which is that a certain amount of set up is required before Geant4 will simulate anything and the complexity of this increases proportionally with the complexity of the system to be simulated.
+
+The set-up that Geant4 requires for a minimally viable program are: 
+\begin{enumerate}
+  \item A description of the detector (the `Detector Constructor').
+  \item Which physics processes to use (the `Physics List').
+  \item Information of the initial particle to simulate (the `Primary Action Generator').
+\end{enumerate}
+With these three classes defined a simple program, linked against the Geant4 libraries then run, will create the initial particle, simulate its movement and any resultant interactions with the detector then exit. Obviously some sort of output is required to make a useful program and this is either done using Geant4's inbuilt verbosity settings (which print information to screen) or by writing a custom read-out class. 
+
+Custom classes are the aspect of Geant4 that make it most useful. Unlike G4BL, discussed below, all aspects of Geant4's operation can be over-ridden by writing custom classes. This means that everything from how Geant4 runs to its physics model can be changed to suit the requirements of the user. Through over-riding a lot of the power of Geant4 can be redirected, for example, it is often useful to be able to change aspects of the simulation with out re-compiling the program, for certain in-built operations Geant4 offers this functionality as default, through use of classes Geant4 allows the user to use the same system to control their own classes.
+
+Geant4 manages simulation by splitting it into several segments. At the top-most level is the run, this represents a collection of events and all the associated information (e.g.\ the detector configuration). Each event within a run starts with an initial particle (as defined by the Primary Action Generator) and tracks it through the detector. A track is made up of many distinct `steps', the number and length of steps that make up a track are limited by physical processes and the geometry of the detector. 
+
+A step in Geant4 represents the maximum length over which no significant change to the particle will occur. A `significant' change is one which will make further calculations of properties of the particle difficult. Determination of the step length of a particle is split between multiple objects within Geant4 but they can be broadly separated into several categories: detector considerations, continuous physical processes and discrete physical processes. In each category the method is broadly the same, any object that can have an affect on the particle proposes a distance from the particle at which the affect will occur, for example a detector component may report that the particle will leave its volume in 10~mm, once all the lengths have been determined the shortest is found and the particle is transported that distance and its properties (position, time and energy) updated. As has been stated the main consideration for the step length with respect to the detector is the volume boundaries which generally delimitate a change in material that will obviously determine which processes occur and how. Continuous processes generally only limit a particle by reducing its energy to zero (obviously some processes can increase it but these rarely limit a step length). Discrete processes obviously limit a particle by changing it in some way, for example by having a particle decay. Once a step length has been determined any continuous affects are applied to the particle, if it's at a volume boundary it moves into the next volume, any limiting discrete processes are applied and the next step length is calculated. 
+
+As Geant4 calculates every step of a particles journey it is possible to get very fine grained information on the state of the simulation by adding an extra process at the end of each step. Using a `G4UserSteppingAction' is a standard method of retrieving information from Geant4 and allows the user to select exactly what is kept and when things are recorded, for example only recording the first step of a particle within a detector volume, because Geant4 uses a parent/child system for secondary particles it is also possible to get the full provenance of the results of an interaction.
 
 % section geant4 (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{G4beamline} % (fold)
 \label{sec:g4beamline}
-% TODO: Simulation: G4beamline: write me
+G4beamline (G4BL) is a program written by Muons, Inc.\ it `is a particle tracking simulation program based on Geant4'~\cite{G4BL ref}. Unlike Geant4, G4BL is a pre-compiled program that performs many of the same processes as Geant4 without the some of the customisation and with the limitation that it doesn't implement real world detectors (only `virtual' ones). In order to implement detectors G4BL uses a script system in which the user writes configuration files in a format that G4BL understands. G4beamline uses, ultimately, the same technology as Geant4 but abstracts a large portion of the work from the end user.
 
 % section g4beamline (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -21,6 +41,7 @@
 \chapter{Geometry} % (fold)
 \label{cha:geometry}
 % TODO: Simulation: Geometry: write me
+
 \section{Physical} % (fold)
 \label{sec:physical}
 % TODO: Simulation: Physical: write me
