@@ -13,3 +13,5 @@ _region_.tex
 *.bbl
 *.blg
 *(busy)
+*.ps
+*.dvi
