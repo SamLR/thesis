@@ -1,5 +1,5 @@
 """
-A script that generates the 1 and 2 D charged particle flux plots
+A script that generates the 1 and 2D charged particle flux plots
 """
 
 from ValueWithError import ValueWithError

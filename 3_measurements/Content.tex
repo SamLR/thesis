@@ -178,21 +178,33 @@ where \(j\) is the flux, \(F\) is a scaling factor, \(C\) is the trigger count w
 
 \begin{table}
     \begin{center}
-    \begin{tabular}{ c | r | c | c | c | r@{\( \pm \)}l | r@{\( \pm \)}l} 
-        Height  &  \multicolumn{2}{c|}{Trigger Rate (Hz)}  &  \multicolumn{2}{c|}{SEC (Hz)}  &  \multicolumn{2}{c}{Factor}  &  \multicolumn{2}{c}{Adjusted Flux} \\
-        (cm)   & Beam on            & Beam off        &  Beam on  &  Beam off  &  \multicolumn{2}{c|}{}  &  \multicolumn{2}{c}{(Hz/A)} \\
+    \begin{tabular}{ c | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l } 
+        Height  &  \multicolumn{4}{c|}{Trigger Rate (kHz)}  
+                                                             &  \multicolumn{4}{c|}{SEC (Hz)}  
+                                                                            &  \multicolumn{2}{c|}{Factor}  
+                                                                                        &  \multicolumn{2}{c}{Flux} \\
+        (cm)   & \multicolumn{2}{c|}{Beam on}  
+                                 & \multicolumn{2}{c|}{Beam off}  
+                                           &  \multicolumn{2}{c|}{Beam on}  
+                                                            &  \multicolumn{2}{c|}{Beam off}  &  \multicolumn{2}{c|}{ }  
+                                                                                 &  \multicolumn{2}{c}{(kHz/A)} \\
         \hline
-        0        &  43,034.7  &  \multirow {4}{*}{0.6}  &  25.1  &  \multirow {4}{*}{7.62}  &  1.0  &  0.0  &  72,000  &  3,000\\
-        \(-5\)   &  28,773.7  &                         &  25.7  &                          &  1.0  &  0.0  &  47,000  &  2,000\\
-        \(-15\)  &   8,926.0  &                         &  24.2  &                          &  1.0  &  0.0  &  16,000  &    700\\
-        \(-15\)  &  10,051.9  &                         &  24.2  &                          &  1.0  &  0.0  &  18,000  &    900\\
-        \hline       
-        5        &  33,274.0  &  \multirow {4}{*}{1.66}  &  26.0  &  \multirow {4}{*}{7.96}  &  1.646  &  0.002  &  89,300  &  4,100  \\
-        5        &  28,416.7  &                          &  22.8  &                          &  1.646  &  0.002  &  92,200  &  4,900  \\
-        15       &  21,603.4  &                          &  26.7  &                          &  1.646  &  0.002  &  55,600  &  2,500  \\
-        15       &  23,701.0  &                          &  27.4  &                          &  1.646  &  0.002  &  58,800  &  2,500  \\
+          0     &   43.0 & 6.1   &   \multirow{3}{*}{0.60} & \multirow{3}{*}{0.14}
+                                           &    25.1 & 3.6   &   \multirow{3}{*}{7.6} & \multirow{3}{*}{1.1}
+                                                                       &    \multirow{3}{*}{1.00} & \multirow{3}{*}{0.00}
+                                                                                 &   72   & 19 \\
+        \(-5\)  &   28.8 & 4.1   &    &    &    25.7 & 3.7   &    &    &    &    &   47   & 12 \\
+        \(-15\) &   10.1 & 1.4   &    &    &    24.2 & 3.5   &    &    &    &    &   17.8 &  4.7 \\
         \hline
-        0        &  26,140.3  &  0.68                    &  26.0  &  8.08                    &  1.646  &  0.002  &  70,600  &  3,300  \\
+          5     &   33.3 & 4.7   &   \multirow{4}{*}{1.66} & \multirow{4}{*}{0.30}   
+                                           &    26.0 & 3.7   &   \multirow{4}{*}{8.0} & \multirow{4}{*}{1.2}
+                                                                             &    \multirow{4}{*}{1.65} & \multirow{5}{*}{0.33}
+                                                                                        &   89   & 29 \\
+          5     &   28.4 & 4.0   &    &    &    22.8 & 3.3   &   8.0 & 1.2   &     &    &   92   & 31 \\
+         15     &   21.6 & 3.1   &    &    &    26.7 & 3.8   &   8.0 & 1.2   &     &    &   56   & 18 \\
+         15     &   23.7 & 3.4   &    &    &    27.4 & 3.9   &   8.0 & 1.2   &     &    &   59   & 19 \\
+         \hline
+          0     &   26.1 & 3.7   &   0.68 & 0.15   &    26.0 & 3.7   &   8.1 & 1.2   &    1.65 & 0.33   &   71   & 23 \\
     \end{tabular}
     \end{center}
     \caption{Summary of the results from the measurement of the vertical charged particle flux. The rates were calculated with counts taken over 50~s, errors on the rates are the square root of the value. The `factor' column accounts for the fact that for the later measurements one MPPC was broken and another damaged, these measurements are then scaled by the ratio of two measurements at 0~cm. The error on the }
