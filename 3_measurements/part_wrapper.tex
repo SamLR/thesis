@@ -20,6 +20,7 @@
 % More symbols
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{wasysym}
 \usepackage{latexsym}
 
 % Surround parts of graphics with box
@@ -77,11 +78,9 @@
 %\fi
 
 % rotating also includes graphicx so don't double import (causes error)
-\ifpdf
+
 \usepackage[pdftex]{graphicx}
-\else
-\usepackage{graphicx}
-\fi
+
 
 % Allow full page landscape images
 \usepackage{rotating}

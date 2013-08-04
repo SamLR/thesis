@@ -15,3 +15,6 @@ _region_.tex
 *(busy)
 *.ps
 *.dvi
+*.fdb_latexmk
+*.fls
+*.pyg
