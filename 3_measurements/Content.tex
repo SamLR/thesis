@@ -83,9 +83,11 @@ One of the simplest forms of read out is a count of triggers, this is what a sca
 % subsubsection scaler (end)
 \subsubsection{Analogue to Digital Converter} % (fold)
 \label{ssub:analogue_to_digital_converter}
-There are two primary attributes of an MPPC signal that were measured: its size and its separation from other signals. In order to measure the size of the MPPC signal an Analogue to Digital Converter (ADC) was used. ADCs work in a variety of ways depending on the exact type of measurement they are making, two common versions used at MuSIC were Peak Sensing ADC (PS-ADC) and Charge Integrating ADCs (CI-ADC). Both types of ADC measure a component of the input analogue signal, the PS type measures the peak voltage whilst the CI measures the integrated charge, both make these measurements only when enabled by the ADC's `gate'. The ADC's gate is normally set to be slightly longer than the expected signal from an MPPC, i.e.\ \( \sim \)50~ns. 
+There are two primary attributes of an MPPC signal that were measured: its size and its separation from other signals. In order to measure the size of the MPPC signal an Analogue to Digital Converter (ADC) was used. ADCs work in a variety of ways depending on the exact type of measurement they are making, two common versions used at MuSIC were Peak Sensing ADC (PS-ADC) and Charge-integrating ADCs (QDC). Both types of ADC measure a component of the input analogue signal, the PS type measures the peak voltage whilst the CI measures the integrated charge, both make these measurements only when enabled by the ADC's `gate'. The ADC's gate is normally set to be slightly longer than the expected signal from an MPPC, i.e.\ \( \sim \)50~ns. 
 
 Several factors define the ADC: the number of bits it is able to read out, the range of input signals that it can measure, its linearity, digitisation/read time (`dead time') and number of channels. The number of bits the ADC has, the range and its linearity work together to determine the accuracy of the ADC; the number of bits determines the maximum resolution between any two values, the range determines the the values that the ADC can measure whilst the linearity maps measured values to actual voltages. dead time measure how long is required to measure the analogue signal and how long it takes to then send the digitised values to the controlling PC i.e.\ for how long the module is inoperative, `dead'. The number of channels on an ADC is a measure of how many inputs it can measure simultaneously, normally one is ascribed to each MPPC so that the triggering signal can be recorded.
+
+A key feature of using an ADC is the pedestal, obviously any analogue signal is going to have some noise that represents its zero level, in an ADC this manifests as a large peak in the lower bins of the ADC, removal of the pedestal is often done on the ADC itself and through DAQ but it does sometimes have to be removed from the data as well.
 
 % subsubsection analogue_to_digital_converter (end)
 \subsubsection{Time to Digital Converter} % (fold)
@@ -132,7 +134,7 @@ The aim of these early experiments was to make three measurements: the total tri
 The DAQ to make the latter two measurements was simple:
 \begin{enumerate}
     \item Amplify the MPPC signal to a detectable level (see section~\ref{sub:multi_photon_pixel_counters}).
-    \item Use a discriminator to remove noisejj.
+    \item Use a discriminator to remove noise.
     \item Use an AND module to form a trigger and raise a veto based on the co-incidence of events from all MPPCs.
     \item Record the analogue MPPC signal using an ADC.
     \item Use the trigger to start the TDC.
@@ -178,33 +180,31 @@ where \(j\) is the flux, \(F\) is a scaling factor, \(C\) is the trigger count w
 
 \begin{table}
     \begin{center}
-    \begin{tabular}{ c | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l | r@{\( \pm \)}l } 
-        Height  &  \multicolumn{4}{c|}{Trigger Rate (kHz)}  
-                                                             &  \multicolumn{4}{c|}{SEC (Hz)}  
-                                                                            &  \multicolumn{2}{c|}{Factor}  
-                                                                                        &  \multicolumn{2}{c}{Flux} \\
+    \begin{tabular}{ c | r@{\( \pm \)}l | c | r@{\( \pm \)}l | c | c | r@{\( \pm \)}l } 
+        Height  &  \multicolumn{3}{c|}{Trigger Rate (kHz)}  
+                                                             &  \multicolumn{3}{c|}{SEC (Hz)}  
+                                                                            &  Factor  &  \multicolumn{2}{c}{Flux} \\
         (cm)   & \multicolumn{2}{c|}{Beam on}  
-                                 & \multicolumn{2}{c|}{Beam off}  
+                                 & Beam off
                                            &  \multicolumn{2}{c|}{Beam on}  
-                                                            &  \multicolumn{2}{c|}{Beam off}  &  \multicolumn{2}{c|}{ }  
-                                                                                 &  \multicolumn{2}{c}{(kHz/A)} \\
+                                                             &  Beam off  &  &  \multicolumn{2}{c}{(kHz/A)} \\
         \hline
-          0     &   43.0 & 6.1   &   \multirow{3}{*}{0.60} & \multirow{3}{*}{0.14}
-                                           &    25.1 & 3.6   &   \multirow{3}{*}{7.6} & \multirow{3}{*}{1.1}
-                                                                       &    \multirow{3}{*}{1.00} & \multirow{3}{*}{0.00}
-                                                                                 &   72   & 19 \\
-        \(-5\)  &   28.8 & 4.1   &    &    &    25.7 & 3.7   &    &    &    &    &   47   & 12 \\
-        \(-15\) &   10.1 & 1.4   &    &    &    24.2 & 3.5   &    &    &    &    &   17.8 &  4.7 \\
+          0     &   43.0 & 6.1   &   \multirow{3}{*}{\( 0.60\pm0.14 \)}
+                                           &    25.1 & 3.6   &   \multirow{3}{*}{\( 7.6 \pm 1.1 \)}
+                                                                       &    \multirow{3}{*}{\( 1.00\pm0.00 \)}
+                                                                                 &   72   & 19   \\
+        \(-5\)  &   28.8 & 4.1   &         &    25.7 & 3.7   &         &         &   47   & 12   \\
+        \(-15\) &   10.1 & 1.4   &         &    24.2 & 3.5   &         &         &   17.8 &  4.7 \\
         \hline
-          5     &   33.3 & 4.7   &   \multirow{4}{*}{1.66} & \multirow{4}{*}{0.30}   
-                                           &    26.0 & 3.7   &   \multirow{4}{*}{8.0} & \multirow{4}{*}{1.2}
-                                                                             &    \multirow{4}{*}{1.65} & \multirow{5}{*}{0.33}
-                                                                                        &   89   & 29 \\
-          5     &   28.4 & 4.0   &    &    &    22.8 & 3.3   &   8.0 & 1.2   &     &    &   92   & 31 \\
-         15     &   21.6 & 3.1   &    &    &    26.7 & 3.8   &   8.0 & 1.2   &     &    &   56   & 18 \\
-         15     &   23.7 & 3.4   &    &    &    27.4 & 3.9   &   8.0 & 1.2   &     &    &   59   & 19 \\
+          5     &   33.3 & 4.7   &   \multirow{4}{*}{\(1.66 \pm 0.30\)}
+                                           &    26.0 & 3.7   &   \multirow{4}{*}{\( 8.0\pm 1.2 \)}
+                                                                          &    \multirow{4}{*}{\( 1.65\pm0.33 \)}
+                                                                               &   89   & 29 \\
+          5     &   28.4 & 4.0   &         &    22.8 & 3.3   &            &    &   92   & 31 \\
+         15     &   21.6 & 3.1   &         &    26.7 & 3.8   &            &    &   56   & 18 \\
+         15     &   23.7 & 3.4   &         &    27.4 & 3.9   &            &    &   59   & 19 \\
          \hline
-          0     &   26.1 & 3.7   &   0.68 & 0.15   &    26.0 & 3.7   &   8.1 & 1.2   &    1.65 & 0.33   &   71   & 23 \\
+          0     &   26.1 & 3.7   &   \( 0.68 \pm 0.15 \)   &    26.0 & 3.7   &   \( 8.1 \pm1.2 \)   &    \( 1.65\pm0.33 \)   &   71   & 23 \\
     \end{tabular}
     \end{center}
     \caption{Summary of the results from the measurement of the vertical charged particle flux. The rates were calculated with counts taken over 50~s, errors on the rates are the square root of the value. The `factor' column accounts for the fact that for the later measurements one MPPC was broken and another damaged, these measurements are then scaled by the ratio of two measurements at 0~cm. The error on the }
@@ -243,25 +243,97 @@ where \(j\) is the flux, \(F\) is a scaling factor, \(C\) is the trigger count w
     \end{tabular}
     \end{center}
     \caption{Table of the results from the 2D measurement. Measurements were taken over 20~s using a CAMAC scaler.}
-    \label{tab:2d_res}
  \end{table}
+ 
+ \begin{figure}[hptb]
+     \centering
+         \includegraphics[width=.9\textwidth]{images/charged_flux/2D_hit_rate_dist.png}
+     \caption{2D plot of the charged particle flux across the front of the MuSIC beam pipe.}
+     \label{fig:2D_flux}
+ \end{figure}
+ 
 % section results (end)
+\section{Detector efficiency} % (fold)
+\label{sec:detector_efficiency}
+As well as making measurements of the charged particle flux another important measurement made, soon after, the second beam time was measurement of the detector efficiency for the circular detector. This was done using 3 large PhotoMultiplier Tubes (PMT) attached to large (\( 40\times40\times1 \)~cm) scintillator paddles. Measurement of the disk detector was calculated using the ratio of detections by the PMTs to detection by the MPPCs (one size considerations had been taken into account).
+
+The test procedure for this measurement was to do long runs with the PMT paddles sandwiching the disk then compare the number of cosmic rays detected in the paddles compared to those detected by the disk. First all remaining MPPCs were tested (one had become irrevocably damaged during beam time) then pairs were tested. Testing consisted of counting the occurrence of three-fold coincidence on the PMTs and either two or three fold coincidence on the MPPCs. Data was taken for approximately one day for each configuration. The results of this measurement are shown in table~\ref{tab:music2_eff}.
+
+\begin{table}
+    \begin{center}
+    \begin{tabular}{c | c | c | c | c | c}
+        Configuration  &  Run Time (\(\times 10^3\)s)  &  MPPC count  &  PMT count  &  Efficiency  &  Adjusted Efficiency \\
+        \hline
+        123            &  86.0                         &   1651       &  1161165    &  0.00142     &  0.059  \\
+        12             &  92.3                         &   6055       &  1229389    &  0.00493     &  0.205  \\
+        13             &  87.1                         &   5653       &  1179116    &  0.00479     &  0.199  \\
+        23             &  84.4                         &   3999       &  1129137    &  0.00354     &  0.147  \\
+        
+    \end{tabular}
+    \end{center}
+    \caption{Summary of the data taken for measuring the MPPC detector efficiency. Configuration refers to which of the three MPPCs were tested. The efficiency is the simple ratio of the MPPC count to the PMT count whilst the adjusted efficiency has been scaled by the ratio of the areas of the scintillators, i.e.\ by \( \frac{40\times40}{\pi3.5^2} \).}
+    \label{tab:music2_eff}
+\end{table}
+% section detector_efficiency (end)
 \section{Analysis} % (fold)
 \label{sec:analysis}
+As can be seen from the figures~\ref{fig:images_hit_rate_rescaled}~and~\ref{fig:2D_flux} the beam spot is positioned slightly up and to the left of the centre of the pipe. As figure~\ref{fig:sim_2d_charged_particle_flux} shows both measurements agree of on the general position of the beam spot. The measurements are not directly comparable due to the differences in both scintillator volume and position with respect to the end of the beam-pipe. Obviously the flux for the 2D measurement is generally lower due to smaller scintillator and larger distance from the beam-pipe.
+
+The detector efficiency measurement for the 2D apparatus allows a more accurate calculation of the flux whilst also providing a bench-mark efficiency for future uses of the scintillator/MPPC configuration. 
+
+The biggest problem, and one which was a cause of many problems, was the fragility of the MPPCs. Both the MPPC itself and the optical cement that bonded them to the scintillator were liable to break and this caused many problems that were could not be easily fixed. 
+
+A signifiant issue with the 1D measurement is the lack of a confirmation measurement that allows verification of the scaling but even if the re-scaled points are ignored then they confirm that the beam spot is in the upper half of the pipe, a measurement later confirmed by the 2D measurement. 
+
+\begin{figure}[hptb]
+    \centering
+        \includegraphics[width=.9\textwidth]{images/charged_flux/sim_2d_charged_particle_flux.png}
+    \caption{G4BL simulation of the charged particle flux at the end of the MuSIC beampipe. Simulation represents \(10^9\) initial protons.}
+    \label{fig:sim_2d_charged_particle_flux}
+\end{figure}
 
 % section analysis (end)
 % chapter charged_particle_flux (end)
 \chapter{Muon Lifetime} % (fold)
 \label{cha:muon_lifetime}
+Measurement of the muon lifetime is primarily used as a basic form of particle identification. Muons have a relatively long lifetime (\(2.197~\mu\)s) that acts as a useful method of identification. Measuring the muon lifetime is also a reasonably simple measurement that can be made with basic equipment. Two scintillators are placed on either side of a suitable stopping target along the muon's direction of travel. The muons loose energy as they traverse the stopping target and some number will stop, these can then be detected by the electrons produced in their decay. Plotting the differences in time between a detection at the upstream scintillator and the downstream scintillator will then produce the characteristic exponential decay curve that can be used to measure the muon lifetime. The curve produced is actually the sum of two separate decay curves: the decay of free muons and, as we have a beam containing negative muons as well, a component due to negative captured muon decay. The ratio of these two component can be used to estimate the ratio of muon types within the beam.
+
+In total three measurements of the muon lifetime were taken: one con-currently with the 2D charged particle flux measurement, a high-statistics run and then measurements that form the basis of the muon momentum spectrum measurement. The first two of these measurements will be discussed here and the final will be discussed in the final chapter of this part.
+
 \section{Experimental Set Up} % (fold)
 \label{sec:experimental_set_up}
+The basic experimental set up for muon lifetime measurement has already been discussed: two scintillators sandwiching a stopping target. Both measurements were made using the same scintillator and stopping target: two \( 380\times50\times3.5 \)~mm scintillators and a \( 370\times80\times6 \)~mm pure copper target. Two MPPCs were mounted on the ends of each scintillator to provide readout. 
+
+The DAQ used was a simple extension of the previous versions. This time, rather than measuring the time differences between the different individual MPPCs the TDC was used to measure the time between a hit on the upstream scintillator and then a hit on the downstream. A `hit' was considered to be a co-incident signal on both MPPCs of that scintillator. As a measure to reduce spurious signals due to other charged particles, e.g.\ electrons, a veto window of 50~ns was used. The veto window was a period following the upstream hit in which no hits were allowed in the downstream scintillator. The veto-window aimed to reject particles that didn't decay between the scintillators, unfortunately this removes a portion of the signal but enough remains for a reasonable measurement to be made.
+
 % section experimental_set_up (end)
 \section{Results} % (fold)
-\label{sec:results}
+\label{sec:results} 
+Figures~\ref{fig:music2_mu_lifetime} and \ref{fig:music3_muon_lifetime} shows the TDC measurements that were made to record the muon lifetime. The TDC bin values are converted to ns using:
+\begin{align}
+    t = K*(T_0-T)
+\end{align}
+where \( t \) is the real time, in ns, \( K \) is the calibration constant (0.025, measured by manufacturer), \( T \) is the value recorded in the MH-TDC and \( T_0 \) is the time when the start signal for the TDC was sent as recorded by the MH-TDC on a dedicated channel.
+
+The data is then fitted with either one or two exponential decay functions and a flat background. Whether a single or double exponential is used depends heavily on the amount of data that was taken. A single function is mainly used to fit the free decay of muons whereas a second exponential can be used to model the decay of captured negative muons inside the stopping target. Fitting the copper-decay exponential requires much greater data as a significant proportion of the events from this are ignored because of the veto-window. In the first 50~ns \(\sim\)26~\% of all copper decays will have already occurred in comparison to only \(\sim\)2\% of free muon decays. 
+
+\begin{figure}[hptb]
+    \centering
+        \includegraphics[width=.9\textwidth]{images/lifetime/music2_mu_lifetime_good.png}
+    \caption{Results of the first measurement of the muon lifetime. The data was binned in 166~ns bins to remove the affects of noise on the data, only entries with an ADC value of 1,100 (which excluded the pedestal) were used.}
+    \label{fig:music2_mu_lifetime}
+\end{figure}
+\begin{figure}[hptb]
+    \centering
+        \includegraphics[width=.9\textwidth]{images/lifetime/music3_muon_lifetime.png}
+    \caption{Results of the second measurement of them muon lifetime. The data was split between bins with a width of 480~ns and the data was fitted for values above 220~ns. The lifetime of muonic copper was fixed to \( 163.5\pm1.0 \)~ns.}
+    \label{fig:music3_muon_lifetime}
+\end{figure}
 
 % section results (end)
 \section{Analysis} % (fold)
 \label{sec:analysis}
+As can be seen in figures~\ref{fig:music2_mu_lifetime} and \ref{fig:music3_muon_lifetime} the exponential decays are good fits to the data with reasonable chi-squared values (\(192.6/114\) and \( 728.7/240 \) respectively). The muon lifetimes measured are in good agreement with the canonical value of \(2.1969811\pm0.0000022\)~\cite{PDG} although the MuSIC2 measurement. Both measurements are low (with the MuSIC2 measurement being significantly lower) but this should be due to affects of other materials in the detector, for example the plastic scintillator which has a captured muon lifetime of \(2026.3\pm1.5\)~ns~\cite{SUZUKI}. 
 
 % section analysis (end)
 % chapter muon_lifetime (end)
