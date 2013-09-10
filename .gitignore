@@ -18,3 +18,6 @@ _region_.tex
 *.fdb_latexmk
 *.fls
 *.pyg
+*.d
+*.so
+*ACLiC*
