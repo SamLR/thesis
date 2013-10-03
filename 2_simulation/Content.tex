@@ -1,94 +1,114 @@
 \part{Simulation} % (fold)
 \label{prt:simulation}
-during the design of MuSIC several simulations were created in order to understand its performance and operating parameters. For this work simulations have been used both to design the detectors and understand the data that they have produced. Two core simulations were created, one using G4Beamline (G4BL) and the other using Geant4. 
+\chapter{Introduction} % (fold)
+\label{cha:sim_introduction}
+To help design and analysis the experiments at MuSIC several simulations were created in order to understand its performance and operating parameters. For this work simulations have been used both to design the detectors and understand the data that they have produced. Two core simulations were created, one using G4Beamline (G4BL) and the other using Geant4. 
 
-The G4BL simulation was mainly used to simulate the bulk of MuSIC but due to its limitations (it's unable to simulate detectors) Geant4 was used to simulate the final detectors. The simulations were run using a combination of the UCL batch farm and a personal computer. The batch farm was used for large simulations expected to take many days (for example running G4BL) whilst the PC (a Macbook Pro laptop) was used for faster runs (e.g.\ Geant4).
-\chapter{Technologies} % (fold)
-\label{cha:technologies}
-As has been discussed above the simulation was split between two systems: G4BL and Geant4. This section will discuss the generalities of these systems before detailed discussion of the Geant4 simulation upon which the bulk of the work was done.
+The G4BL simulation was mainly used to simulate the bulk of MuSIC and the hadron interactions but due to its limitations, Geant4 was used to simulate the detectors. The simulations were run using a combination of the UCL batch farm and a personal computer. The batch farm was used for large simulations expected to take many days (running G4BL) whilst the PC (a Macbook Pro laptop) was used for faster runs (e.g.\ Geant4).
+
+As has been discussed above the simulation was split between two systems: G4BL and Geant4. This section will discuss the limitations and requirements of these systems before detailed discussion of the implementations used for MuSIC.
+
 \section{Geant4} % (fold)
 \label{sec:geant4}
 Geant4 is described as `a toolkit for the simulation of the passage of particles through matter'~\cite{Geant4 REF}. Rather than a complete program it is a collection of pre-compiled libraries that comprise the basics required to simulate various interactions. It has additional libraries that provide further functionality such as visualisation. 
 
-Geant4 is written in C++ using an object orientated approach that allows the user to either use Geant4's standard implementations or write their own. This flexibility also means that all the functionality of Geant4 is explicitly opt-in making the resultant programs much faster than they would otherwise be. Geant4's speed does come at a cost which is that a certain amount of set up is required before Geant4 will simulate anything and the complexity of this increases proportionally with the complexity of the system to be simulated.
+Geant4 is written in C++ using an object orientated approach that allows the user to either use Geant4's implementation of a class or write their own. This flexibility also means that all the functionality of Geant4 is explicitly opt-in making the resultant programs much faster than they would otherwise be (as only the components that are selected are used). Geant4's speed does come at a cost which is that a larger amount of configuration is required than would be needed for less flexible solutions (c.f.\ G4BL).
 
-The set-up that Geant4 requires for a minimally viable program are: 
-\begin{enumerate}
-  \item A description of the detector (the `Detector Constructor').
-  \item Which physics processes to use (the `Physics List').
-  \item Information of the initial particle to simulate (the `Primary Action Generator').
-\end{enumerate}
-With these three classes defined a simple program, linked against the Geant4 libraries then run, will create the initial particle, simulate its movement and any resultant interactions with the detector then exit. Obviously some sort of output is required to make a useful program and this is either done using Geant4's inbuilt verbosity settings (which print information to screen) or by writing a custom read-out class. 
+Even with it's increased flexibility Geant4 has certain requirements that must be met in order to use its framework:
+\begin{description}
+  \item[The detector constructor] A description of the detector.
+  \item[The physics list] Which physics processes to use.
+  \item[The primary action generator] Information of the initial particle to simulate.
+\end{description}
+With these three classes defined a simple program can be linked against the Geant4 libraries and run. The libraries will use the primaryaction generator to create the initial particle; simulate its movement and interactions in the world as specified by the detector constructor and the physics list respectively, then exit.
 
-Custom classes are the aspect of Geant4 that make it most useful. Unlike G4BL, discussed below, all aspects of Geant4's operation can be over-ridden by writing custom classes. This means that everything from how Geant4 runs to its physics model can be changed to suit the requirements of the user. Through over-riding a lot of the power of Geant4 can be redirected, for example, it is often useful to be able to change aspects of the simulation with out re-compiling the program, for certain in-built operations Geant4 offers this functionality as default, through use of classes Geant4 allows the user to use the same system to control their own classes.
+The above simple program can be further refined with custom classes which over-ride or expand Geant4's in-built implementations. Unlike G4BL, discussed below, all aspects of Geant4's operation can be over-ridden and changed in this way. Everything from how Geant4 runs to its physics model can be changed to suit the requirements of the user.
 
-Geant4 manages simulation by splitting it into several segments. At the top-most level is the run, this represents a collection of events and all the associated information (e.g.\ the detector configuration). Each event within a run starts with an initial particle (as defined by the Primary Action Generator) and tracks it through the detector. A track is made up of many distinct `steps', the number and length of steps that make up a track are limited by physical processes and the geometry of the detector. 
+Geant4 manages simulation by splitting it into several layers. At the top-most level is the run, this represents a collection of events and all the associated information (e.g.\ the detector configuration). Each event within a run starts with an initial particle (as defined by the primary action generator) and tracks it through the detector if another particle is produced (e.g.\ if the initial particle decays or scatters) then a new track is added to the simulation to represent the new particle(s). A track is made up of steps, each step represents a period of time in which nothing significant occurs.
 
-A step in Geant4 represents the maximum length over which no significant change to the particle will occur. A `significant' change is one which will make further calculations of properties of the particle difficult. Determination of the step length of a particle is split between multiple objects within Geant4 but they can be broadly separated into several categories: detector considerations, continuous physical processes and discrete physical processes. In each category the method is broadly the same, any object that can have an affect on the particle proposes a distance from the particle at which the affect will occur, for example a detector component may report that the particle will leave its volume in 10~mm, once all the lengths have been determined the shortest is found and the particle is transported that distance and its properties (position, time and energy) updated. As has been stated the main consideration for the step length with respect to the detector is the volume boundaries which generally delimitate a change in material that will obviously determine which processes occur and how. Continuous processes generally only limit a particle by reducing its energy to zero (obviously some processes can increase it but these rarely limit a step length). Discrete processes obviously limit a particle by changing it in some way, for example by having a particle decay. Once a step length has been determined any continuous affects are applied to the particle, if it's at a volume boundary it moves into the next volume, any limiting discrete processes are applied and the next step length is calculated. 
+A `significant' occurrence is one which will make further calculations of properties of the particle difficult and therefore limit the length of the particle's step. Determination of this step length is split between multiple objects within Geant4 but they can be broadly separated into several categories: detector considerations, continuous physical processes and discrete physical processes. In each category the method is broadly the same, any object that can have an affect on the particle proposes a distance from the particle at which the affect will occur, e.g.\ a detector may report that the particle will leave the current volume in 10~mm whilst a decay process may report that the particle will likely decay in 5~mm. Once all the proposed step lengths have been determined the shortest is found and the particle is transported that distance and properties (position, time, energy, particle type(s)
+  \footnote{Should the particle decay it is replaced at the end of the step with the appropriate daughter particles.} etc.)
+updated. As has been stated the main consideration for the step length with respect to the detector is the volume boundaries which generally delimitate a change in material that will obviously determine which processes occur and how. Continuous processes generally only limit a particle by reducing its energy to zero (obviously some processes can increase it but these rarely limit a step length). Discrete processes obviously limit a particle by changing it in some way, for example by having a particle decay. Once a step length has been determined any continuous affects are applied to the particle, if it's at a volume boundary it moves into the next volume, any limiting discrete processes are applied and the next step length is calculated. 
 
-As Geant4 calculates every step of a particles journey it is possible to get very fine grained information on the state of the simulation by adding an extra process at the end of each step. Using a `G4UserSteppingAction' is a standard method of retrieving information from Geant4 and allows the user to select exactly what is kept and when things are recorded, for example only recording the first step of a particle within a detector volume, because Geant4 uses a parent/child system for secondary particles it is also possible to get the full provenance of the results of an interaction.
+% As Geant4 calculates every step of a particles journey it is possible to get very fine grained information on the state of the simulation by adding an extra process at the end of each step. Using a `G4UserSteppingAction' is a standard method of retrieving information from Geant4 and allows the user to select exactly what is kept and when things are recorded, for example only recording the first step of a particle within a detector volume, because Geant4 uses a parent/child system for secondary particles it is also possible to get the full provenance of the results of an interaction.
 
 % section geant4 (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{G4beamline} % (fold)
 \label{sec:g4beamline}
-G4beamline (G4BL) is a program written by Muons, Inc.\ it `is a particle tracking simulation program based on Geant4'~\cite{G4BL ref}. Unlike Geant4, G4BL is a pre-compiled program that performs many of the same processes as Geant4 without the some of the customisation and with the limitation that it doesn't implement real world detectors (only `virtual' ones). In order to implement detectors G4BL uses a script system in which the user writes configuration files in a format that G4BL understands. G4beamline uses, ultimately, the same technology as Geant4 but abstracts a large portion of the work from the end user.
+G4beamline (G4BL) is a program written by Muons, Inc.~\cite{G4BL ref}, it is a particle tracking simulation program based on Geant4. Unlike Geant4, G4BL is a pre-compiled program that the user writes simple scripts for that define parameters of the simulation. In general creating simulations in G4BL is much quicker than Geant4 as a significant amount of `boilerplate' code is removed but at the cost of flexibility.
+
+The largest limitations of G4BL are that it is unable to simulate real-world detectors and does not provide the required detail in the output. 
 
 % section g4beamline (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% chapter technologies (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Geometry} % (fold)
-\label{cha:geometry}
-% TODO: Simulation: Geometry: write me
+% chapter sim_introduction (end)
+\chapter{Implementation} % (fold)
+\label{cha:implementation}
+As has been discussed the simulation was split between G4BL and Geant4. The G4BL simulation script was kindly provided by M. Yoshida so this section will mainly discuss the implementation of the Geant4 detector simulation. This is split into several key classes, listed here (this is in addition to the detector constructor, primary action generator and physics list previous discussed).
+\begin{description}
+  \item[The field] the magnetic field at the detectors.
+  \item[ROOT] an interface to the ROOT statistics framework.
+  \item[Actions] these were classes that were called as various simulation layers (run, event and stepping) began and/or ended.
+  \item[Messengers] a system for configuring the simulation without re-compiling the program.
+\end{description}
+\section{Detector Constructor} % (fold)
+\label{sec:detector_constructor}
+The detector constructor has several two key jobs: defining the materials and defining the volumes of the detector. The materials describe the physical properties of various elements, compounds and mixtures. The volumes describe the position, rotation, material and logical attributes of the detector. 
 
-\section{Physical} % (fold)
-\label{sec:physical}
-% TODO: Simulation: Physical: write me
-\subsection{Approximations} % (fold)
-\label{sub:approximations}
-% TODO: Simulation: Approximations: write me
+\subsection{Material simulation} % (fold)
+\label{sub:material_simulation}
+The material properties in Geant4 are split into two sets: referred to here as `core' and `extended'. The core properties cover those values that are required for reasonable calculations of energy loss in the material, the extended properties cover more detailed calculations and less common properties. 
 
-% subsection approximations (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% section physical (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Materials} % (fold)
-\label{sec:materials}
-% TODO: Simulation: Materials: write me
-\subsection{Important Properties} % (fold)
-\label{sub:important_properties}
-% TODO: Simulation: Important Properties: write me
-% TODO: Simulation: Important Properties: A, Z, Density
+The core properties for an element are the atomic number, the mass number and the molar density. Compounds and mixtures are described as ratios of elements at a specific density. Extended properties can be any property of the material that the user is interested in, for our purposes these were the optical properties of the materials and are discussed below.
 
+Due to the computationally complex nature of interactions between light and material Geant4 uses single values or tables of values to describe the various optical processes that it can simulate. The tables it uses are defined in terms of photon energy and missing values are generated using interpolation. The properties that were included in the simulation were:
+\begin{enumerate}
+  \item Refractive index.
+  \item Emission spectrum.
+  \item Absorption spectrum. 
+  \item Scintillation yield.
+  \item Fast scintillation rise time.
+\end{enumerate}
 
-% subsection important_properties (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% section materials (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Magnetic Fields} % (fold)
-\label{sec:magnetic_fields}
-% TODO: Simulation: Magnetic Fields: write me
+% subsection material_simulation (end)
+\subsection{Detector Volumes} % (fold)
+\label{sub:detector_volumes}
+The detector volumes describe the physical pieces of the detector. Each volume is split between three classes: the shape, the logical volume and the physical volume. The shape describes the geometrical volume. The logical volume describes how the piece works within the larger simulation. Finally the physical volume places and orientates the volume. 
 
-% section magnetic_fields (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% chapter geometry (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Physics Simulation} % (fold)
-\label{cha:physics_simulation}
-% TODO: Simulation: Physics Simulation: write me
-\section{Muon Capture Rate} % (fold)
-\label{sec:muon_capture_rate}
-% TODO: Simulation: Muon Capture Rate: write me
+The volume's shape is normally described by either basic polyhedra (cubes, tubes, trapezoids etc.) Geant4 also provides basic tools for creating compound shapes made of the intersection, difference and addition of basic shapes. Using these tools it's possible to create suitably complex constructions in code. Geant4 does offer more powerful tools (e.g.\ geometry importing) but these were not used for this simulation.
 
-% section muon_capture_rate (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Hadron Production} % (fold)
-\label{sec:hadron_production}
-% TODO: Simulation: Hadron Production: write me
+The logical volume stores the specific attributes of the component. The main information that the logical volume maintains is what material a component is (this can be changed using messengers) and what shape it is. A single logical volume can be associated with many physical volumes to make repetitive constructs easy to define.
 
-% section hadron_production (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+As has been noted the physical volume positions the component. Additionally it stores which logical volume this component is in (as well as which logical volume describes it). Storing the parent volume means that a single logical volume can contain many sub-components to make bulk manipulation easier, as all placements are done with respect to the parent volume's origin.  
+
+% subsection detector_volumes (end)
+% section detector_constructor (end)
+\section{Primary Action Generator} % (fold)
+\label{sec:primary_action_generator}
+
+% section primary_action_generator (end)
+\section{Physics List} % (fold)
+\label{sec:physics_list}
+
+% section physics_list (end)
+\section{The Field} % (fold)
+\label{sec:the_field}
+
+% section the_field (end)
+\section{ROOT} % (fold)
+\label{sec:root}
+
+% section root (end)
+\section{Actions} % (fold)
+\label{sec:actions}
+
+% section actions (end)
+\section{Messengers} % (fold)
+\label{sec:messengers}
+
+% section messengers (end)
+% chapter implementation (end)
 % chapter physics_simulation (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Simulation Verification} % (fold)
@@ -97,5 +117,9 @@ G4beamline (G4BL) is a program written by Muons, Inc.\ it `is a particle trackin
 
 % chapter simulation_verification (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Simulation Analysis} % (fold)
+\label{cha:simulation_analysis}
+
+% chapter simulation_analysis (end)
 % part simulation (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
