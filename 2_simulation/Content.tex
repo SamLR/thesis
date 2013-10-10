@@ -6,7 +6,7 @@ To help design and analysis the experiments at MuSIC several simulations were cr
 
 The G4BL simulation was mainly used to simulate the bulk of MuSIC and the hadron interactions but due to its limitations, Geant4 was used to simulate the detectors. The simulations were run using a combination of the UCL batch farm and a personal computer. The batch farm was used for large simulations expected to take many days (running G4BL) whilst the PC (a Macbook Pro laptop) was used for faster runs (e.g.\ Geant4).
 
-As has been discussed above the simulation was split between two systems: G4BL and Geant4. This section will discuss the limitations and requirements of these systems before detailed discussion of the implementations used for MuSIC.
+As has been discussed above the simulation was split between two systems: G4BL and Geant4. This section will discuss the limitations and requirements of these systems before detailed discussion of the implementations used for MuSIC. The discussion will focus on the work done on the simulation of MuSIC~5 as this was the most complete simulation performed but portions were also used in earlier beam runs. Most notably the G4BL simulation was used as a point of comparison with the total charged particle flux measurements. Less simulation work was done for the muon lifetime measurement as it was often simpler to compare the measured lifetimes with those made by others.
 
 \section{Geant4} % (fold)
 \label{sec:geant4}
@@ -52,6 +52,8 @@ As has been discussed the simulation was split between G4BL and Geant4. The G4BL
   \item[Actions] these were classes that were called as various simulation layers (run, event and stepping) began and/or ended.
   \item[Messengers] a system for configuring the simulation without re-compiling the program.
 \end{description}
+Messengers are a special case as they don't implement any specific part of the simulation but are used to specify parameters to be used in the following run. These parameters are supplied via configuration files called macros. Four aspects of the simulation are controlled via these macros: the primary action generator, the physics list, the magnetic field and the detector constructor. 
+
 \section{Detector Constructor} % (fold)
 \label{sec:detector_constructor}
 The detector constructor has several two key jobs: defining the materials and defining the volumes of the detector. The materials describe the physical properties of various elements, compounds and mixtures. The volumes describe the position, rotation, material and logical attributes of the detector. 
@@ -80,13 +82,80 @@ The volume's shape is normally described by either basic polyhedra (cubes, tubes
 
 The logical volume stores the specific attributes of the component. The main information that the logical volume maintains is what material a component is (this can be changed using messengers) and what shape it is. A single logical volume can be associated with many physical volumes to make repetitive constructs easy to define.
 
-As has been noted the physical volume positions the component. Additionally it stores which logical volume this component is in (as well as which logical volume describes it). Storing the parent volume means that a single logical volume can contain many sub-components to make bulk manipulation easier, as all placements are done with respect to the parent volume's origin.  
+As has been noted the physical volume positions the component. Additionally it stores which logical volume this component is in (as well as which logical volume describes it). Storing the parent volume means that a single logical volume can contain many sub-components to make bulk manipulation easier, as all placements are done with respect to the parent volume's origin.
 
 % subsection detector_volumes (end)
+\subsection{Implementation} % (fold)
+\label{ssub:implementation}
+The implementation of the detector construction was split over several functions, this discussion will follow similar lines. The materials will be discussed, then the optical properties and finally the geometry of the detector.
+
+\subsubsection{Detector materials} % (fold)
+\label{ssub:detector_materials}
+Three sets of materials were implemented for MuSIC: the world material (air); the simple elements for the stopping target and degrader (aluminium and copper); and the plastics for the scintillators. 
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c | c |  d{6} | c }
+    Element &  Atomic  &  \multicolumn{1}{c|}{Atomic Mass}  &  Density        \\
+            &  Number  &  \multicolumn{1}{c|}{(g/mole)}     &  (g/cm\( ^3 \)) \\
+    \hline
+    H       &     1    &  1.01    &    --     \\
+    C       &     6    &  12.01   &    --     \\
+    N       &     7    &  14.01   &    --     \\
+    O       &     8    &  16.00   &    --     \\
+    Al      &    13    &  26.98   &    2.70   \\
+    Cu      &    29    &  63.546  &    8.94   \\
+  \end{tabular}
+  \end{center}
+  \caption{Elements used in the simulation and their properties. Only copper and aluminium were used in their elemental form. Elements used in compounds were not provided a density as this was used a property of the compound.}
+  \label{tab:sim_elements}
+\end{table}
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c | c | c | d{4} | c}
+    Compound/  &  Components   &  Ratio    &  \multicolumn{1}{c|}{Density}
+                                                           &  Ref   \\
+    Element    &               &           &  \multicolumn{1}{c|}{(g/cm\(^3\))}
+                                                           &        \\
+    \hline
+    Mylar      &   H, C, O     &  8:10:4   &   1.397       & \ref{Mylar Data} \\
+    Air        &     N, O      &    7:3    &   1.290       & \ref{Air}        \\
+    EJ-212     &     H, C      &  1:1.103  &   1.023       & \ref{EJ212}      \\
+    BCF-91A (core)  &  H, C    &  1:1.006  &   1.05        & \ref{BCF-91A}    \\
+    BCF-91A (clad)  & H, C, O  &   8:5:2   &   1.05        & \ref{BCF-91A}    \\
+    
+  \end{tabular}
+  \end{center}
+  \caption{Compounds and mixtures used for the simulation.}
+  \label{tab:sim_compounds_and_elements}
+\end{table}
+
+% subsubsection detector_materials (end) 
+\subsubsection{Optical properties} % (fold)
+\label{ssub:optical_properties}
+
+% subsubsection optical_properties (end)
+\subsubsection{Detector geometry} % (fold)
+\label{ssub:detector_geometry}
+
+MuSIC was simulated as an \(8\times8\times8\)~m\(^3\) volume of air containing the detector. The size of the volume was chosen to simplify transformations of the detector with respect to the magnetic field. The detector was implemented as four placed volumes inside a logical volume that allowed their bulk manipulation. The four sub-volumes were the upstream scintillator, the downstream scintillator, the degrader and the stopping target. Which corresponded to the muon lifetime measurements and the final momentum spectrum measurements made during runs 4 and 5. All four volumes were used as virtual detectors as discussed in section~\ref{sec:stepping_action}.
+
+The degrader and stopping target were configured so that their material and thickness could be changed using macros. This made testing configurations prior to beam-time much quicker and easier. This also meant that the degrader could be removed by creating a volume of air. The materials used for the degrader and stopping target were simple elemental metals (aluminium, copper and magnesium) for which the addition of optical properties was deemed unnecessary as the scintillators were black wrapped.
+
+% subsubsection detector_geometry (end)
+% subsection implementation (end)
 % section detector_constructor (end)
 \section{Primary Action Generator} % (fold)
 \label{sec:primary_action_generator}
+The primary action generator is a relatively simple class that specifies the properties of the initial particle to be simulated. This means for all implementations defining the particles type, position within the volume and initial momentum. 
 
+\subsection{Implementation} % (fold).
+\label{sub:implementation}
+At MuSIC the key task of the primary action generator was to provide a method of both importing the output of the G4BL simulation or creating random particles with a distribution similar to those seen in the G4BL data. 
+corollary
+
+% subsection implementation (end)
 % section primary_action_generator (end)
 \section{Physics List} % (fold)
 \label{sec:physics_list}
@@ -102,20 +171,17 @@ As has been noted the physical volume positions the component. Additionally it s
 % section root (end)
 \section{Actions} % (fold)
 \label{sec:actions}
+\subsection{Stepping Action} % (fold)
+\label{sub:stepping_action}
 
+% subsection stepping_action (end)
 % section actions (end)
-\section{Messengers} % (fold)
-\label{sec:messengers}
+\section{Muonic copper lifetime} % (fold)
+\label{sec:muonic_copper_lifetime}
 
-% section messengers (end)
+% section muonic_copper_lifetime (end)
 % chapter implementation (end)
 % chapter physics_simulation (end)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Simulation Verification} % (fold)
-\label{cha:simulation_verification}
-% TODO: Simulation: Simulation Verification: write me
-
-% chapter simulation_verification (end)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Simulation Analysis} % (fold)
 \label{cha:simulation_analysis}

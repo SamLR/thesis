@@ -20,6 +20,7 @@
 % More symbols
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{wasysym}
 \usepackage{latexsym}
 
 % Surround parts of graphics with box
@@ -31,6 +32,8 @@
 % Package for including code in the document
 \usepackage{listings}
 
+% Package for including code in the document
+\usepackage{minted}
 % If you want to generate a toc for each chapter (use with book)
 \usepackage{minitoc}
 
@@ -52,6 +55,12 @@
 
 % Create tables of a defined total width with wrapped columns
 \usepackage{tabulary}
+% This gives better decimel place alignment (apparently)
+% Still needs multicolumns in the header to align correctly
+\usepackage{dcolumn}
+% Arguments are:
+% D<column sep (instead of &)><column sep to insert><n decimal places>
+\newcolumntype{d}[1]{D{.}{.}{#1}}
 % threeparttable gives us access to footnotes in tables
 \usepackage{threeparttable}
 % wan to get ditto mark
@@ -62,6 +71,7 @@
 \usepackage{pifont} 
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%
+\newcommand{\mus}{$~\mu$s}
 
 % make bullet point lists with tighter spacing
 \usepackage{mdwlist}
@@ -74,11 +84,9 @@
 %\fi
 
 % rotating also includes graphicx so don't double import (causes error)
-\ifpdf
+
 \usepackage[pdftex]{graphicx}
-\else
-\usepackage{graphicx}
-\fi
+
 
 % Allow full page landscape images
 \usepackage{rotating}
@@ -91,6 +99,7 @@
 
 \date{\today}
 \renewcommand{\sfdefault}{phv}
+\graphicspath{{1_introduction/images}}
 \begin{document}    
 
     \maketitle
